@@ -1,208 +1,41 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Cache
- * @subpackage Storage
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Cache\Storage\Adapter;
 
-use Memcached as MemcachedResource,
-    Zend\Cache\Exception;
+use Memcached as MemcachedResource;
+use Zend\Cache\Exception;
 
 /**
  * These are options specific to the APC adapter
- *
- * @category   Zend
- * @package    Zend_Cache
- * @subpackage Storage
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class MemcachedOptions extends AdapterOptions
 {
     /**
-     * Map of option keys to \Memcached options
-     *
-     * @var array
+     * The namespace separator
+     * @var string
      */
-    private $optionsMap = array(
-        'binary_protocol'      => MemcachedResource::OPT_BINARY_PROTOCOL,
-        'buffer_writes'        => MemcachedResource::OPT_BUFFER_WRITES,
-        'cache_lookups'        => MemcachedResource::OPT_CACHE_LOOKUPS,
-        'compression'          => MemcachedResource::OPT_COMPRESSION,
-        'connect_timeout'      => MemcachedResource::OPT_CONNECT_TIMEOUT,
-        'distribution'         => MemcachedResource::OPT_DISTRIBUTION,
-        'hash'                 => MemcachedResource::OPT_HASH,
-        'libketama_compatible' => MemcachedResource::OPT_LIBKETAMA_COMPATIBLE,
-        'no_block'             => MemcachedResource::OPT_NO_BLOCK,
-        'poll_timeout'         => MemcachedResource::OPT_POLL_TIMEOUT,
-        'recv_timeout'         => MemcachedResource::OPT_RECV_TIMEOUT,
-        'retry_timeout'        => MemcachedResource::OPT_RETRY_TIMEOUT,
-        'send_timeout'         => MemcachedResource::OPT_SEND_TIMEOUT,
-        'serializer'           => MemcachedResource::OPT_SERIALIZER,
-        'server_failure_limit' => MemcachedResource::OPT_SERVER_FAILURE_LIMIT,
-        'socket_recv_size'     => MemcachedResource::OPT_SOCKET_RECV_SIZE,
-        'socket_send_size'     => MemcachedResource::OPT_SOCKET_SEND_SIZE,
-        'tcp_nodelay'          => MemcachedResource::OPT_TCP_NODELAY,
-
-        // The prefix_key act as namespace an will be set directly
-        // 'prefix_key'           => MemcachedResource::OPT_PREFIX_KEY,
-    );
+    protected $namespaceSeparator = ':';
 
     /**
-     * Memcached server address
+     * The memcached resource manager
+     *
+     * @var null|MemcachedResourceManager
+     */
+    protected $resourceManager;
+
+    /**
+     * The resource id of the resource manager
      *
      * @var string
      */
-    protected $server = 'localhost';
-
-    /**
-     * Memcached port
-     *
-     * @var integer
-     */
-    protected $port = 11211;
-
-    /**
-     * Whether or not to enable binary protocol for communication with server
-     *
-     * @var bool
-     */
-    protected $binaryProtocol = false;
-
-    /**
-     * Enable or disable buffered I/O
-     *
-     * @var bool
-     */
-    protected $bufferWrites = false;
-
-    /**
-     * Whether or not to cache DNS lookups
-     *
-     * @var bool
-     */
-    protected $cacheLookups = false;
-
-    /**
-     * Whether or not to use compression
-     *
-     * @var bool
-     */
-    protected $compression = true;
-
-    /**
-     * Time at which to issue connection timeout, in ms
-     *
-     * @var int
-     */
-    protected $connectTimeout = 1000;
-
-    /**
-     * Server distribution algorithm
-     *
-     * @var int
-     */
-    protected $distribution = MemcachedResource::DISTRIBUTION_MODULA;
-
-    /**
-     * Hashing algorithm to use
-     *
-     * @var int
-     */
-    protected $hash = MemcachedResource::HASH_DEFAULT;
-
-    /**
-     * Whether or not to enable compatibility with libketama-like behavior.
-     *
-     * @var bool
-     */
-    protected $libketamaCompatible = false;
-
-    /**
-     * Whether or not to enable asynchronous I/O
-     *
-     * @var bool
-     */
-    protected $noBlock = false;
-
-    /**
-     * Timeout for connection polling, in ms
-     *
-     * @var int
-     */
-    protected $pollTimeout = 0;
-
-    /**
-     * Maximum allowed time for a recv operation, in ms
-     *
-     * @var int
-     */
-    protected $recvTimeout = 0;
-
-    /**
-     * Time to wait before retrying a connection, in seconds
-     *
-     * @var int
-     */
-    protected $retryTimeout = 0;
-
-    /**
-     * Maximum allowed time for a send operation, in ms
-     *
-     * @var int
-     */
-    protected $sendTimeout = 0;
-
-    /**
-     * Serializer to use
-     *
-     * @var int
-     */
-    protected $serializer = MemcachedResource::SERIALIZER_PHP;
-
-    /**
-     * Maximum number of server connection errors
-     *
-     * @var int
-     */
-    protected $serverFailureLimit = 0;
-
-    /**
-     * Maximum socket send buffer in bytes
-     *
-     * @var int
-     */
-    protected $socketSendSize;
-
-    /**
-     * Maximum socket recv buffer in bytes
-     *
-     * @var int
-     */
-    protected $socketRecvSize;
-
-    /**
-     * Whether or not to enable no-delay feature for connecting sockets
-     *
-     * @var bool
-     */
-    protected $tcpNodelay = false;
+    protected $resourceId = 'default';
 
     /**
      * Set namespace.
@@ -215,7 +48,7 @@ class MemcachedOptions extends AdapterOptions
      */
     public function setNamespace($namespace)
     {
-        $namespace = (string)$namespace;
+        $namespace = (string) $namespace;
 
         if (128 < strlen($namespace)) {
             throw new Exception\InvalidArgumentException(sprintf(
@@ -227,602 +60,260 @@ class MemcachedOptions extends AdapterOptions
         return parent::setNamespace($namespace);
     }
 
-    public function setServer($server)
+    /**
+     * Set namespace separator
+     *
+     * @param  string $namespaceSeparator
+     * @return MemcachedOptions
+     */
+    public function setNamespaceSeparator($namespaceSeparator)
     {
-        $this->server= $server;
-        return $this;
-    }
-
-    public function getServer()
-    {
-        return $this->server;
-    }
-
-    public function setPort($port)
-    {
-        if ((!is_int($port) && !is_numeric($port))
-            || 0 > $port
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
+        $namespaceSeparator = (string) $namespaceSeparator;
+        if ($this->namespaceSeparator !== $namespaceSeparator) {
+            $this->triggerOptionEvent('namespace_separator', $namespaceSeparator);
+            $this->namespaceSeparator = $namespaceSeparator;
         }
-
-        $this->port= $port;
-        return $this;
-    }
-
-    public function getPort()
-    {
-        return $this->port;
-    }
-
-    /**
-     * Set flag indicating whether or not to enable binary protocol for
-     * communication with server
-     *
-     * @param  bool $binaryProtocol
-     * @return MemcachedOptions
-     */
-    public function setBinaryProtocol($binaryProtocol)
-    {
-        $this->binaryProtocol = (bool) $binaryProtocol;
         return $this;
     }
 
     /**
-     * Whether or not to enable binary protocol for communication with server
-     *
-     * @return bool
-     */
-    public function getBinaryProtocol()
-    {
-        return $this->binaryProtocol;
-    }
-
-    /**
-     * Set flag indicating whether or not buffered I/O is enabled
-     *
-     * @param  bool $bufferWrites
-     * @return MemcachedOptions
-     */
-    public function setBufferWrites($bufferWrites)
-    {
-        $this->bufferWrites = (bool) $bufferWrites;
-        return $this;
-    }
-
-    /**
-     * Whether or not buffered I/O is enabled
-     *
-     * @return bool
-     */
-    public function getBufferWrites()
-    {
-        return $this->bufferWrites;
-    }
-
-    /**
-     * Set flag indicating whether or not to cache DNS lookups
-     *
-     * @param  bool $cacheLookups
-     * @return MemcachedOptions
-     */
-    public function setCacheLookups($cacheLookups)
-    {
-        $this->cacheLookups = (bool) $cacheLookups;
-        return $this;
-    }
-
-    /**
-     * Whether or not to cache DNS lookups
-     *
-     * @return bool
-     */
-    public function getCacheLookups()
-    {
-        return $this->cacheLookups;
-    }
-
-    /**
-     * Set flag indicating whether or not to use compression
-     *
-     * @param  bool $compression
-     * @return MemcachedOptions
-     */
-    public function setCompression($compression)
-    {
-        $this->compression = (bool) $compression;
-        return $this;
-    }
-
-    /**
-     * Whether or not compression is enabled
-     *
-     * @return bool
-     */
-    public function getCompression()
-    {
-        return $this->compression;
-    }
-
-    /**
-     * Set interval for connection timeouts, in ms
-     *
-     * @param  int $connectTimeout
-     * @return MemcachedOptions
-     */
-    public function setConnectTimeout($connectTimeout)
-    {
-        if ((!is_int($connectTimeout) && !is_numeric($connectTimeout))
-            || 0 > $connectTimeout
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
-        }
-
-        $this->connectTimeout = (int) $connectTimeout;
-        return $this;
-    }
-
-    /**
-     * Get connection timeout value
-     *
-     * @return int
-     */
-    public function getConnectTimeout()
-    {
-        return $this->connectTimeout;
-    }
-
-    /**
-     * Set server distribution algorithm
-     *
-     * @param  int $distribution
-     * @return MemcachedOptions
-     */
-    public function setDistribution($distribution)
-    {
-        if (!in_array($distribution, array(
-            MemcachedResource::DISTRIBUTION_MODULA,
-            MemcachedResource::DISTRIBUTION_CONSISTENT,
-        ))) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects either Memcached::DISTRIBUTION_MODULA or Memcached::DISTRIBUTION_CONSISTENT',
-                __METHOD__
-            ));
-        }
-
-        $this->distribution = $distribution;
-        return $this;
-    }
-
-    /**
-     * Get server distribution algorithm
-     *
-     * @return int
-     */
-    public function getDistribution()
-    {
-        return $this->distribution;
-    }
-
-    /**
-     * Set hashing algorithm
-     *
-     * @param  int $hash
-     * @return MemcachedOptions
-     */
-    public function setHash($hash)
-    {
-        if (!in_array($hash, array(
-            MemcachedResource::HASH_DEFAULT,
-            MemcachedResource::HASH_MD5,
-            MemcachedResource::HASH_CRC,
-            MemcachedResource::HASH_FNV1_64,
-            MemcachedResource::HASH_FNV1A_64,
-            MemcachedResource::HASH_FNV1_32,
-            MemcachedResource::HASH_FNV1A_32,
-            MemcachedResource::HASH_HSIEH,
-            MemcachedResource::HASH_MURMUR,
-        ))) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects one of the Memcached::HASH_* constants',
-                __METHOD__
-            ));
-        }
-
-        $this->hash = $hash;
-        return $this;
-    }
-
-    /**
-     * Get hash algorithm
-     *
-     * @return int
-     */
-    public function getHash()
-    {
-        return $this->hash;
-    }
-
-    /**
-     * Set flag indicating whether or not to enable libketama compatibility
-     *
-     * @param  bool $libketamaCompatible
-     * @return MemcachedOptions
-     */
-    public function setLibketamaCompatible($libketamaCompatible)
-    {
-        $this->libketamaCompatible = (bool) $libketamaCompatible;
-        return $this;
-    }
-
-    /**
-     * Whether or not to enable libketama compatibility
-     *
-     * @return bool
-     */
-    public function getLibketamaCompatible()
-    {
-        return $this->libketamaCompatible;
-    }
-
-    /**
-     * Set flag indicating whether or not to enable asynchronous I/O
-     *
-     * @param  bool $noBlock
-     * @return MemcachedOptions
-     */
-    public function setNoBlock($noBlock)
-    {
-        $this->noBlock = (bool) $noBlock;
-        return $this;
-    }
-
-    /**
-     * Whether or not to enable asynchronous I/O
-     *
-     * @return bool
-     */
-    public function getNoBlock()
-    {
-        return $this->noBlock;
-    }
-
-    /**
-     * Set interval for connection polling timeout, in ms
-     *
-     * @param  int $pollTimeout
-     * @return MemcachedOptions
-     */
-    public function setPollTimeout($pollTimeout)
-    {
-        if ((!is_int($pollTimeout) && !is_numeric($pollTimeout))
-            || 0 > $pollTimeout
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
-        }
-
-        $this->pollTimeout = (int) $pollTimeout;
-        return $this;
-    }
-
-    /**
-     * Get connection polling timeout value
-     *
-     * @return int
-     */
-    public function getPollTimeout()
-    {
-        return $this->pollTimeout;
-    }
-
-    /**
-     * Set prefix for keys
-     *
-     * The prefix key act as namespace.
-     *
-     * @param  string $prefixKey
-     * @return MemcachedOptions
-     */
-    public function setPrefixKey($prefixKey)
-    {
-        return $this->setNamespace($prefixKey);
-    }
-
-    /**
-     * Get prefix key
-     *
-     * The prefix key act as namespace.
+     * Get namespace separator
      *
      * @return string
      */
-    public function getPrefixKey()
+    public function getNamespaceSeparator()
     {
-        return $this->getNamespace();
+        return $this->namespaceSeparator;
     }
 
     /**
-     * Set interval for recv timeout, in ms
+     * A memcached resource to share
      *
-     * @param  int $recvTimeout
+     * @param null|MemcachedResource $memcachedResource
      * @return MemcachedOptions
+     * @deprecated Please use the resource manager instead
      */
-    public function setRecvTimeout($recvTimeout)
+    public function setMemcachedResource(MemcachedResource $memcachedResource = null)
     {
-        if ((!is_int($recvTimeout) && !is_numeric($recvTimeout))
-            || 0 > $recvTimeout
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
-        }
+        trigger_error(
+            'This method is deprecated and will be removed in the feature'
+            . ', please use the resource manager instead',
+            E_USER_DEPRECATED
+        );
 
-        $this->recvTimeout = (int) $recvTimeout;
+        if ($memcachedResource !== null) {
+            $this->triggerOptionEvent('memcached_resource', $memcachedResource);
+            $resourceManager = $this->getResourceManager();
+            $resourceId      = $this->getResourceId();
+            $resourceManager->setResource($resourceId, $memcachedResource);
+        }
         return $this;
     }
 
     /**
-     * Get recv timeout value
+     * Get memcached resource to share
      *
-     * @return int
+     * @return MemcachedResource
+     * @deprecated Please use the resource manager instead
      */
-    public function getRecvTimeout()
+    public function getMemcachedResource()
     {
-        return $this->recvTimeout;
+        trigger_error(
+            'This method is deprecated and will be removed in the feature'
+            . ', please use the resource manager instead',
+            E_USER_DEPRECATED
+        );
+
+        return $this->resourceManager->getResource($this->getResourceId());
     }
 
     /**
-     * Set retry interval, in seconds
+     * Set the memcached resource manager to use
      *
-     * @param  int $retryTimeout
+     * @param null|MemcachedResourceManager $resourceManager
      * @return MemcachedOptions
      */
-    public function setRetryTimeout($retryTimeout)
+    public function setResourceManager(MemcachedResourceManager $resourceManager = null)
     {
-        if ((!is_int($retryTimeout) && !is_numeric($retryTimeout))
-            || 0 > $retryTimeout
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
+        if ($this->resourceManager !== $resourceManager) {
+            $this->triggerOptionEvent('resource_manager', $resourceManager);
+            $this->resourceManager = $resourceManager;
         }
-
-        $this->retryTimeout = (int) $retryTimeout;
         return $this;
     }
 
     /**
-     * Get retry timeout value, in seconds
+     * Get the memcached resource manager
      *
-     * @return int
+     * @return MemcachedResourceManager
      */
-    public function getRetryTimeout()
+    public function getResourceManager()
     {
-        return $this->retryTimeout;
+        if (!$this->resourceManager) {
+            $this->resourceManager = new MemcachedResourceManager();
+        }
+        return $this->resourceManager;
     }
 
     /**
-     * Set interval for send timeout, in ms
+     * Get the memcached resource id
      *
-     * @param  int $sendTimeout
+     * @return string
+     */
+    public function getResourceId()
+    {
+        return $this->resourceId;
+    }
+
+    /**
+     * Set the memcached resource id
+     *
+     * @param string $resourceId
      * @return MemcachedOptions
      */
-    public function setSendTimeout($sendTimeout)
+    public function setResourceId($resourceId)
     {
-        if ((!is_int($sendTimeout) && !is_numeric($sendTimeout))
-            || 0 > $sendTimeout
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
+        $resourceId = (string) $resourceId;
+        if ($this->resourceId !== $resourceId) {
+            $this->triggerOptionEvent('resource_id', $resourceId);
+            $this->resourceId = $resourceId;
         }
-
-        $this->sendTimeout = (int) $sendTimeout;
         return $this;
     }
 
     /**
-     * Get send timeout value
+     * Get the persistent id
      *
-     * @return int
+     * @return string
      */
-    public function getSendTimeout()
+    public function getPersistentId()
     {
-        return $this->sendTimeout;
+        return $this->getResourceManager()->getPersistentId($this->getResourceId());
     }
 
     /**
-     * Set serializer
+     * Set the persistent id
      *
-     * @param  int $serializer
+     * @param string $persistentId
      * @return MemcachedOptions
      */
-    public function setSerializer($serializer)
+    public function setPersistentId($persistentId)
     {
-        if (!in_array($serializer, array(
-            MemcachedResource::SERIALIZER_PHP,
-            MemcachedResource::SERIALIZER_IGBINARY,
-            MemcachedResource::SERIALIZER_JSON,
-        ))) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects one of the Memcached::SERIALIZER_* constants',
-                __METHOD__
-            ));
-        }
-
-        if ($serializer == MemcachedResource::SERIALIZER_IGBINARY) {
-            if (!MemcachedResource::HAVE_IGBINARY) {
-                throw new Exception\RuntimeException(sprintf(
-                    '%s: cannot set to igbinary; not available',
-                    __METHOD__
-                ));
-            }
-        }
-
-        if ($serializer == MemcachedResource::SERIALIZER_JSON) {
-            if (!MemcachedResource::HAVE_JSON) {
-                throw new Exception\RuntimeException(sprintf(
-                    '%s: cannot set to json; not available',
-                    __METHOD__
-                ));
-            }
-        }
-
-        $this->serializer = $serializer;
+        $this->triggerOptionEvent('persistent_id', $persistentId);
+        $this->getResourceManager()->setPersistentId($this->getPersistentId(), $persistentId);
         return $this;
     }
 
     /**
-     * Get serializer
+     * Add a server to the list
      *
-     * @return int
-     */
-    public function getSerializer()
-    {
-        return $this->serializer;
-    }
-
-    /**
-     * Set maximum number of server connection failures
-     *
-     * @param  int $serverFailureLimit
+     * @param string $host
+     * @param int $port
+     * @param int $weight
      * @return MemcachedOptions
+     * @deprecated Please use the resource manager instead
      */
-    public function setServerFailureLimit($serverFailureLimit)
+    public function addServer($host, $port = 11211, $weight = 0)
     {
-        if ((!is_int($serverFailureLimit) && !is_numeric($serverFailureLimit))
-            || 0 > $serverFailureLimit
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
-        }
+        trigger_error(
+            'This method is deprecated and will be removed in the feature'
+            . ', please use the resource manager instead',
+            E_USER_DEPRECATED
+        );
 
-        $this->serverFailureLimit = (int) $serverFailureLimit;
+        $this->getResourceManager()->addServer($this->getResourceId(), array(
+            'host'   => $host,
+            'port'   => $port,
+            'weight' => $weight
+        ));
+
         return $this;
     }
 
     /**
-     * Get maximum server failures allowed
-     *
-     * @return int
-     */
-    public function getServerFailureLimit()
+    * Set a list of memcached servers to add on initialize
+    *
+    * @param string|array $servers list of servers
+    * @return MemcachedOptions
+    * @throws Exception\InvalidArgumentException
+    */
+    public function setServers($servers)
     {
-        return $this->serverFailureLimit;
-    }
-
-    /**
-     * Set maximum socket send buffer in bytes
-     *
-     * @param  int $socketSendSize
-     * @return MemcachedOptions
-     */
-    public function setSocketSendSize($socketSendSize)
-    {
-        if ($socketSendSize === null) {
-            return $this;
-        }
-
-        if ((!is_int($socketSendSize) && !is_numeric($socketSendSize))
-            || 0 > $socketSendSize
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
-        }
-
-        $this->socketSendSize = (int) $socketSendSize;
+        $this->getResourceManager()->setServers($this->getResourceId(), $servers);
         return $this;
     }
 
     /**
-     * Get maximum socket send buffer in bytes
-     *
-     * @return int
-     */
-    public function getSocketSendSize()
-    {
-        return $this->socketSendSize;
-    }
-
-    /**
-     * Set maximum socket recv buffer in bytes
-     *
-     * @param  int $socketRecvSize
-     * @return MemcachedOptions
-     */
-    public function setSocketRecvSize($socketRecvSize)
-    {
-        if ($socketRecvSize === null) {
-            return $this;
-        }
-
-        if ((!is_int($socketRecvSize) && !is_numeric($socketRecvSize))
-            || 0 > $socketRecvSize
-        ) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s expects a positive integer',
-                __METHOD__
-            ));
-        }
-
-        $this->socketRecvSize = (int) $socketRecvSize;
-        return $this;
-    }
-
-    /**
-     * Get maximum socket recv buffer in bytes
-     *
-     * @return int
-     */
-    public function getSocketRecvSize()
-    {
-        return $this->socketRecvSize;
-    }
-
-    /**
-     * Set whether or not to enable no-delay feature when connecting sockets
-     *
-     * @param  bool $tcpNodelay
-     * @return MemcachedOptions
-     */
-    public function setTcpNodelay($tcpNodelay)
-    {
-        $this->tcpNodelay = (bool) $tcpNodelay;
-        return $this;
-    }
-
-    /**
-     * Whether or not to enable no-delay feature when connecting sockets
-     *
-     * @return bool
-     */
-    public function getTcpNodelay()
-    {
-        return $this->tcpNodelay;
-    }
-
-    /**
-     * Get map of option keys to \Memcached constants
+     * Get Servers
      *
      * @return array
      */
-    public function getOptionsMap()
+    public function getServers()
     {
-        return $this->optionsMap;
+        return $this->getResourceManager()->getServers($this->getResourceId());
+    }
+
+    /**
+    * Set libmemcached options
+    *
+    * @param array $libOptions
+    * @return MemcachedOptions
+    * @link http://php.net/manual/memcached.constants.php
+    */
+    public function setLibOptions(array $libOptions)
+    {
+        $this->getResourceManager()->setLibOptions($this->getResourceId(), $libOptions);
+        return $this;
+    }
+
+    /**
+     * Set libmemcached option
+     *
+     * @param string|int $key
+     * @param mixed $value
+     * @return MemcachedOptions
+     * @link http://php.net/manual/memcached.constants.php
+     * @deprecated Please use lib_options or the resource manager instead
+     */
+    public function setLibOption($key, $value)
+    {
+        trigger_error(
+            'This method is deprecated and will be removed in the feature'
+            . ', please use "lib_options" or the resource manager instead',
+            E_USER_DEPRECATED
+        );
+
+        $this->getResourceManager()->setLibOption($this->getResourceId(), $key, $value);
+        return $this;
+    }
+
+    /**
+     * Get libmemcached options
+     *
+     * @return array
+     * @link http://php.net/manual/memcached.constants.php
+     */
+    public function getLibOptions()
+    {
+        return $this->getResourceManager()->getLibOptions($this->getResourceId());
+    }
+
+    /**
+    * Get libmemcached option
+    *
+    * @param string|int $key
+    * @return mixed
+    * @link http://php.net/manual/memcached.constants.php
+    * @deprecated Please use lib_options or the resource manager instead
+    */
+    public function getLibOption($key)
+    {
+        trigger_error(
+            'This method is deprecated and will be removed in the feature'
+            . ', please use "lib_options" or the resource manager instead',
+            E_USER_DEPRECATED
+        );
+
+        return $this->getResourceManager()->getLibOption($this->getResourceId(), $key);
     }
 }

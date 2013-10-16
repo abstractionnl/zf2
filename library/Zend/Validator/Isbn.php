@@ -1,36 +1,14 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator;
 
-/**
- * @uses       \Zend\Validator\AbstractValidator
- * @uses       \Zend\Validator\Exception
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
 class Isbn extends AbstractValidator
 {
     const AUTO    = 'auto';
@@ -44,9 +22,9 @@ class Isbn extends AbstractValidator
      *
      * @var array
      */
-    protected $_messageTemplates = array(
+    protected $messageTemplates = array(
         self::INVALID => "Invalid type given. String or integer expected",
-        self::NO_ISBN => "'%value%' is not a valid ISBN number",
+        self::NO_ISBN => "The input is not a valid ISBN number",
     );
 
     protected $options = array(
@@ -109,7 +87,7 @@ class Isbn extends AbstractValidator
      * Returns true if and only if $value is a valid ISBN.
      *
      * @param  string $value
-     * @return boolean
+     * @return bool
      */
     public function isValid($value)
     {
@@ -176,8 +154,8 @@ class Isbn extends AbstractValidator
      * It is allowed only empty string, hyphen and space.
      *
      * @param  string $separator
-     * @throws \Zend\Validator\Exception When $separator is not valid
-     * @return \Zend\Validator\Isbn Provides a fluent interface
+     * @throws Exception\InvalidArgumentException When $separator is not valid
+     * @return Isbn Provides a fluent interface
      */
     public function setSeparator($separator)
     {
@@ -204,8 +182,8 @@ class Isbn extends AbstractValidator
      * Set allowed ISBN type.
      *
      * @param  string $type
-     * @throws \Zend\Validator\Exception When $type is not valid
-     * @return \Zend\Validator\Isbn Provides a fluent interface
+     * @throws Exception\InvalidArgumentException When $type is not valid
+     * @return Isbn Provides a fluent interface
      */
     public function setType($type)
     {

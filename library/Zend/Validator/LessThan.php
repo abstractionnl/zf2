@@ -1,38 +1,17 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator;
 
-use Zend\Config\Config;
+use Traversable;
+use Zend\Stdlib\ArrayUtils;
 
-/**
- * @uses       \Zend\Validator\AbstractValidator
- * @uses       \Zend\Validator\Exception
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
 class LessThan extends AbstractValidator
 {
     const NOT_LESS           = 'notLessThan';
@@ -43,9 +22,9 @@ class LessThan extends AbstractValidator
      *
      * @var array
      */
-    protected $_messageTemplates = array(
-        self::NOT_LESS           => "'%value%' is not less than '%max%'",
-        self::NOT_LESS_INCLUSIVE => "'%value%' is not less or equal than '%max%'"
+    protected $messageTemplates = array(
+        self::NOT_LESS           => "The input is not less than '%max%'",
+        self::NOT_LESS_INCLUSIVE => "The input is not less or equal than '%max%'"
     );
 
     /**
@@ -53,8 +32,8 @@ class LessThan extends AbstractValidator
      *
      * @var array
      */
-    protected $_messageVariables = array(
-        'max' => '_max'
+    protected $messageVariables = array(
+        'max' => 'max'
     );
 
     /**
@@ -62,7 +41,7 @@ class LessThan extends AbstractValidator
      *
      * @var mixed
      */
-    protected $_max;
+    protected $max;
 
     /**
      * Whether to do inclusive comparisons, allowing equivalence to max
@@ -70,21 +49,22 @@ class LessThan extends AbstractValidator
      * If false, then strict comparisons are done, and the value may equal
      * the max option
      *
-     * @var boolean
+     * @var bool
      */
-    protected $_inclusive;
+    protected $inclusive;
 
     /**
      * Sets validator options
      *
-     * @param  mixed|array|Config $options
-     * @return void
+     * @param  array|Traversable $options
+     * @throws Exception\InvalidArgumentException
      */
     public function __construct($options = null)
     {
-        if ($options instanceof Config) {
-            $options = $options->toArray();
-        } else if (!is_array($options)) {
+        if ($options instanceof Traversable) {
+            $options = ArrayUtils::iteratorToArray($options);
+        }
+        if (!is_array($options)) {
             $options = func_get_args();
             $temp['max'] = array_shift($options);
 
@@ -105,8 +85,8 @@ class LessThan extends AbstractValidator
 
         $this->setMax($options['max'])
              ->setInclusive($options['inclusive']);
-             
-        parent::__construct();
+
+        parent::__construct($options);
     }
 
     /**
@@ -116,40 +96,40 @@ class LessThan extends AbstractValidator
      */
     public function getMax()
     {
-        return $this->_max;
+        return $this->max;
     }
 
     /**
      * Sets the max option
      *
      * @param  mixed $max
-     * @return \Zend\Validator\LessThan Provides a fluent interface
+     * @return LessThan Provides a fluent interface
      */
     public function setMax($max)
     {
-        $this->_max = $max;
+        $this->max = $max;
         return $this;
     }
 
     /**
      * Returns the inclusive option
      *
-     * @return boolean
+     * @return bool
      */
     public function getInclusive()
     {
-        return $this->_inclusive;
+        return $this->inclusive;
     }
 
     /**
      * Sets the inclusive option
      *
-     * @param  boolean $inclusive
-     * @return \Zend\Validator\LessThan Provides a fluent interface
+     * @param  bool $inclusive
+     * @return LessThan Provides a fluent interface
      */
     public function setInclusive($inclusive)
     {
-        $this->_inclusive = $inclusive;
+        $this->inclusive = $inclusive;
         return $this;
     }
 
@@ -158,19 +138,19 @@ class LessThan extends AbstractValidator
      * when the inclusive option is true
      *
      * @param  mixed $value
-     * @return boolean
+     * @return bool
      */
     public function isValid($value)
     {
         $this->setValue($value);
 
-        if ($this->_inclusive) {
-            if ($value > $this->_max) {
+        if ($this->inclusive) {
+            if ($value > $this->max) {
                 $this->error(self::NOT_LESS_INCLUSIVE);
                 return false;
             }
         } else {
-            if ($value >= $this->_max) {
+            if ($value >= $this->max) {
                 $this->error(self::NOT_LESS);
                 return false;
             }

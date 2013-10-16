@@ -1,42 +1,26 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category  Zend
- * @package   Zend_Uri
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Uri;
 
 /**
  * HTTP URI handler
- *
- * @category  Zend
- * @package   Zend_Uri
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Http extends Uri
 {
     /**
      * @see Uri::$validSchemes
      */
-    protected static $validSchemes = array('http', 'https');
+    protected static $validSchemes = array(
+        'http',
+        'https'
+    );
 
     /**
      * @see Uri::$defaultPorts
@@ -49,7 +33,7 @@ class Http extends Uri
     /**
      * @see Uri::$validHostTypes
      */
-    protected $validHostTypes = self::HOST_DNSORIPV4;
+    protected $validHostTypes = self::HOST_DNS_OR_IPV4_OR_IPV6_OR_REGNAME;
 
     /**
      * User name as provided in authority of URI
@@ -66,10 +50,10 @@ class Http extends Uri
     /**
      * Check if the URI is a valid HTTP URI
      *
-     * This applys additional HTTP specific validation rules beyond the ones
+     * This applies additional HTTP specific validation rules beyond the ones
      * required by the generic URI syntax
      *
-     * @return boolean
+     * @return bool
      * @see    Uri::isValid()
      */
     public function isValid()
@@ -134,14 +118,14 @@ class Http extends Uri
     /**
      * Validate the host part of an HTTP URI
      *
-     * This overrides the common URI validation method with a DNS or IPv4 only
+     * This overrides the common URI validation method with a DNS or IP only
      * default. Users may still enforce allowing other host types.
      *
      * @param  string  $host
-     * @param  integer $allowed
-     * @return boolean
+     * @param  int $allowed
+     * @return bool
      */
-    public static function validateHost($host, $allowed = self::HOST_DNSORIPV4)
+    public static function validateHost($host, $allowed = self::HOST_DNS_OR_IPV4_OR_IPV6)
     {
         return parent::validateHost($host, $allowed);
     }
@@ -178,16 +162,33 @@ class Http extends Uri
      *
      * If no port is set, will return the default port according to the scheme
      *
-     * @return integer
+     * @return int
      * @see    Zend\Uri\Uri::getPort()
      */
     public function getPort()
     {
         if (empty($this->port)) {
-            if (array_key_exists($this->scheme, self::$defaultPorts)) {
-                return self::$defaultPorts[$this->scheme];
+            if (array_key_exists($this->scheme, static::$defaultPorts)) {
+                return static::$defaultPorts[$this->scheme];
             }
         }
         return $this->port;
+    }
+
+    /**
+     * Parse a URI string
+     *
+     * @param  string $uri
+     * @return Http
+     */
+    public function parse($uri)
+    {
+        parent::parse($uri);
+
+        if (empty($this->path)) {
+            $this->path = '/';
+        }
+
+        return $this;
     }
 }

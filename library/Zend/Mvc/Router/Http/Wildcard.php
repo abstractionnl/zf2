@@ -1,44 +1,23 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Mvc_Router
- * @subpackage Http
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Mvc\Router\Http;
 
-use Traversable,
-    Zend\Stdlib\IteratorToArray,
-    Zend\Stdlib\RequestDescription as Request,
-    Zend\Mvc\Router\Exception;
+use Traversable;
+use Zend\Mvc\Router\Exception;
+use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\RequestInterface as Request;
 
 /**
  * Wildcard route.
- *
- * @package    Zend_Mvc_Router
- * @subpackage Http
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @see        http://manuals.rubyonrails.com/read/chapter/65
  */
-class Wildcard implements Route
+class Wildcard implements RouteInterface
 {
     /**
      * Delimiter between keys and values.
@@ -48,33 +27,32 @@ class Wildcard implements Route
     protected $keyValueDelimiter;
 
     /**
-     * Delimtier before parameters.
+     * Delimiter before parameters.
      *
      * @var array
      */
     protected $paramDelimiter;
-    
+
     /**
      * Default values.
-     * 
+     *
      * @var array
      */
     protected $defaults;
-    
+
     /**
      * List of assembled parameters.
-     * 
+     *
      * @var array
      */
     protected $assembledParams = array();
 
     /**
      * Create a new wildcard route.
-     * 
+     *
      * @param  string $keyValueDelimiter
      * @param  string $paramDelimiter
      * @param  array  $defaults
-     * @return void
      */
     public function __construct($keyValueDelimiter = '/', $paramDelimiter = '/', array $defaults = array())
     {
@@ -82,18 +60,19 @@ class Wildcard implements Route
         $this->paramDelimiter    = $paramDelimiter;
         $this->defaults          = $defaults;
     }
-    
+
     /**
-     * factory(): defined by Route interface.
+     * factory(): defined by RouteInterface interface.
      *
-     * @see    Route::factory()
+     * @see    \Zend\Mvc\Router\RouteInterface::factory()
      * @param  array|Traversable $options
-     * @return void
+     * @return Wildcard
+     * @throws Exception\InvalidArgumentException
      */
     public static function factory($options = array())
     {
         if ($options instanceof Traversable) {
-            $options = IteratorToArray::convert($options);
+            $options = ArrayUtils::iteratorToArray($options);
         } elseif (!is_array($options)) {
             throw new Exception\InvalidArgumentException(__METHOD__ . ' expects an array or Traversable set of options');
         }
@@ -105,7 +84,7 @@ class Wildcard implements Route
         if (!isset($options['param_delimiter'])) {
             $options['param_delimiter'] = '/';
         }
-        
+
         if (!isset($options['defaults'])) {
             $options['defaults'] = array();
         }
@@ -114,20 +93,25 @@ class Wildcard implements Route
     }
 
     /**
-     * match(): defined by Route interface.
+     * match(): defined by RouteInterface interface.
      *
-     * @see    Route::match()
-     * @param  Request $request
-     * @return RouteMatch
+     * @see    \Zend\Mvc\Router\RouteInterface::match()
+     * @param  Request      $request
+     * @param  integer|null $pathOffset
+     * @return RouteMatch|null
      */
     public function match(Request $request, $pathOffset = null)
     {
-        if (!method_exists($request, 'uri')) {
+        if (!method_exists($request, 'getUri')) {
             return null;
         }
 
-        $uri  = $request->uri();
+        $uri  = $request->getUri();
         $path = $uri->getPath();
+
+        if ($path === '/') {
+            $path = '';
+        }
 
         if ($pathOffset !== null) {
             $path = substr($path, $pathOffset);
@@ -139,23 +123,23 @@ class Wildcard implements Route
         if (count($params) > 1 && ($params[0] !== '' || end($params) === '')) {
             return null;
         }
-        
+
         if ($this->keyValueDelimiter === $this->paramDelimiter) {
             $count = count($params);
 
             for ($i = 1; $i < $count; $i += 2) {
                 if (isset($params[$i + 1])) {
-                    $matches[urldecode($params[$i])] = urldecode($params[$i + 1]);
+                    $matches[rawurldecode($params[$i])] = rawurldecode($params[$i + 1]);
                 }
             }
         } else {
             array_shift($params);
-            
+
             foreach ($params as $param) {
                 $param = explode($this->keyValueDelimiter, $param, 2);
-      
+
                 if (isset($param[1])) {
-                    $matches[urldecode($param[0])] = urldecode($param[1]);
+                    $matches[rawurldecode($param[0])] = rawurldecode($param[1]);
                 }
             }
         }
@@ -164,9 +148,9 @@ class Wildcard implements Route
     }
 
     /**
-     * assemble(): Defined by Route interface.
+     * assemble(): Defined by RouteInterface interface.
      *
-     * @see    Route::assemble()
+     * @see    \Zend\Mvc\Router\RouteInterface::assemble()
      * @param  array $params
      * @param  array $options
      * @return mixed
@@ -179,21 +163,21 @@ class Wildcard implements Route
 
         if ($mergedParams) {
             foreach ($mergedParams as $key => $value) {
-                $elements[] = urlencode($key) . $this->keyValueDelimiter . urlencode($value);
+                $elements[] = rawurlencode($key) . $this->keyValueDelimiter . rawurlencode($value);
 
                 $this->assembledParams[] = $key;
             }
 
             return $this->paramDelimiter . implode($this->paramDelimiter, $elements);
         }
-        
+
         return '';
     }
-    
+
     /**
-     * getAssembledParams(): defined by Route interface.
-     * 
-     * @see    Route::getAssembledParams
+     * getAssembledParams(): defined by RouteInterface interface.
+     *
+     * @see    RouteInterface::getAssembledParams
      * @return array
      */
     public function getAssembledParams()

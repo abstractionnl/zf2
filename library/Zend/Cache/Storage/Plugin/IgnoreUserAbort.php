@@ -1,144 +1,79 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Cache
- * @subpackage Storage
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Cache\Storage\Plugin;
 
-use Zend\Cache\Storage\Adapter,
-    Zend\Cache\Storage\Event,
-    Zend\EventManager\EventCollection;
+use Zend\Cache\Exception;
+use Zend\Cache\Storage\Event;
+use Zend\EventManager\EventManagerInterface;
 
-/**
- * @category   Zend
- * @package    Zend_Cache
- * @subpackage Storage
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
 class IgnoreUserAbort extends AbstractPlugin
 {
     /**
-     * Handles
+     * The storage who activated ignore_user_abort.
      *
-     * @var array
-     */
-    protected $handles = array();
-
-    /**
-     * The storage adapter target who activated ignore_user_abort.
-     *
-     * @var null|Adapter
+     * @var null|\Zend\Cache\Storage\StorageInterface
      */
     protected $activatedTarget = null;
 
     /**
-     * Attach
-     *
-     * @param  EventCollection $eventCollection
-     * @return Serializer
-     * @throws Exception\LogicException
+     * {@inheritDoc}
      */
-    public function attach(EventCollection $events)
+    public function attach(EventManagerInterface $events, $priority = 1)
     {
-        $index = spl_object_hash($events);
-        if (isset($this->handles[$index])) {
-            throw new Exception\LogicException('Plugin already attached');
-        }
-
-        $handles = array();
-        $this->handles[$index] = & $handles;
-
         $cbOnBefore = array($this, 'onBefore');
         $cbOnAfter  = array($this, 'onAfter');
 
-        $handles[] = $events->attach('setItem.pre',       $cbOnBefore);
-        $handles[] = $events->attach('setItem.post',      $cbOnAfter);
-        $handles[] = $events->attach('setItem.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('setItem.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('setItem.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('setItem.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('setItems.pre',       $cbOnBefore);
-        $handles[] = $events->attach('setItems.post',      $cbOnAfter);
-        $handles[] = $events->attach('setItems.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('setItems.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('setItems.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('setItems.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('addItem.pre',       $cbOnBefore);
-        $handles[] = $events->attach('addItem.post',      $cbOnAfter);
-        $handles[] = $events->attach('addItem.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('addItem.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('addItem.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('addItem.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('addItems.pre',       $cbOnBefore);
-        $handles[] = $events->attach('addItems.post',      $cbOnAfter);
-        $handles[] = $events->attach('addItems.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('addItems.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('addItems.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('addItems.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('replaceItem.pre',       $cbOnBefore);
-        $handles[] = $events->attach('replaceItem.post',      $cbOnAfter);
-        $handles[] = $events->attach('replaceItem.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('replaceItem.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('replaceItem.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('replaceItem.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('replaceItems.pre',       $cbOnBefore);
-        $handles[] = $events->attach('replaceItems.post',      $cbOnAfter);
-        $handles[] = $events->attach('replaceItems.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('replaceItems.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('replaceItems.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('replaceItems.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('checkAndSetItem.pre',       $cbOnBefore);
-        $handles[] = $events->attach('checkAndSetItem.post',      $cbOnAfter);
-        $handles[] = $events->attach('checkAndSetItem.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('checkAndSetItem.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('checkAndSetItem.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('checkAndSetItem.exception', $cbOnAfter, $priority);
 
         // increment / decrement item(s)
-        $handles[] = $events->attach('incrementItem.pre',       $cbOnBefore);
-        $handles[] = $events->attach('incrementItem.post',      $cbOnAfter);
-        $handles[] = $events->attach('incrementItem.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('incrementItem.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('incrementItem.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('incrementItem.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('incrementItems.pre',       $cbOnBefore);
-        $handles[] = $events->attach('incrementItems.post',      $cbOnAfter);
-        $handles[] = $events->attach('incrementItems.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('incrementItems.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('incrementItems.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('incrementItems.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('decrementItem.pre',       $cbOnBefore);
-        $handles[] = $events->attach('decrementItem.post',      $cbOnAfter);
-        $handles[] = $events->attach('decrementItem.exception', $cbOnAfter);
+        $this->listeners[] = $events->attach('decrementItem.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('decrementItem.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('decrementItem.exception', $cbOnAfter, $priority);
 
-        $handles[] = $events->attach('decrementItems.pre',       $cbOnBefore);
-        $handles[] = $events->attach('decrementItems.post',      $cbOnAfter);
-        $handles[] = $events->attach('decrementItems.exception', $cbOnAfter);
-
-        return $this;
-    }
-
-    /**
-     * Detach
-     *
-     * @param  EventCollection $events
-     * @return Serializer
-     * @throws Exception\LogicException
-     */
-    public function detach(EventCollection $events)
-    {
-        $index = spl_object_hash($events);
-        if (!isset($this->handles[$index])) {
-            throw new Exception\LogicException('Plugin not attached');
-        }
-
-        // detach all handles of this index
-        foreach ($this->handles[$index] as $handle) {
-            $events->detach($handle);
-        }
-
-        // remove all detached handles
-        unset($this->handles[$index]);
-
-        return $this;
+        $this->listeners[] = $events->attach('decrementItems.pre',       $cbOnBefore, $priority);
+        $this->listeners[] = $events->attach('decrementItems.post',      $cbOnAfter, $priority);
+        $this->listeners[] = $events->attach('decrementItems.exception', $cbOnAfter, $priority);
     }
 
     /**

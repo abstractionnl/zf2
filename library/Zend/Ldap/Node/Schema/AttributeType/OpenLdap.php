@@ -1,45 +1,21 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Ldap
- * @subpackage Schema
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Ldap\Node\Schema\AttributeType;
 
-use Zend\Ldap\Node\Schema\AttributeType,
-    Zend\Ldap\Node\Schema;
+use Zend\Ldap\Node\Schema;
 
 /**
- * Zend_Ldap_Node_Schema_AttributeType_OpenLdap provides access to the attribute type
+ * Zend\Ldap\Node\Schema\AttributeType\OpenLdap provides access to the attribute type
  * schema information on an OpenLDAP server.
- *
- * @uses       \Zend\Ldap\Node\Schema\AttributeType
- * @uses       \Zend\Ldap\Node\Schema\Item
- * @category   Zend
- * @package    Zend_Ldap
- * @subpackage Schema
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class OpenLdap extends Schema\Item implements AttributeType
+class OpenLdap extends Schema\AbstractItem implements AttributeTypeInterface
 {
     /**
      * Gets the attribute name
@@ -70,11 +46,14 @@ class OpenLdap extends Schema\Item implements AttributeType
     {
         if ($this->syntax === null) {
             $parent = $this->getParent();
-            if ($parent === null) return null;
-            else return $parent->getSyntax();
-        } else {
-            return $this->syntax;
+            if ($parent === null) {
+                return null;
+            } else {
+                return $parent->getSyntax();
+            }
         }
+
+        return $this->syntax;
     }
 
     /**
@@ -87,17 +66,20 @@ class OpenLdap extends Schema\Item implements AttributeType
         $maxLength = $this->{'max-length'};
         if ($maxLength === null) {
             $parent = $this->getParent();
-            if ($parent === null) return null;
-            else return $parent->getMaxLength();
-        } else {
-            return (int)$maxLength;
+            if ($parent === null) {
+                return null;
+            } else {
+                return $parent->getMaxLength();
+            }
         }
+
+        return (int) $maxLength;
     }
 
     /**
      * Returns if the attribute is single-valued.
      *
-     * @return boolean
+     * @return bool
      */
     public function isSingleValued()
     {
@@ -115,14 +97,16 @@ class OpenLdap extends Schema\Item implements AttributeType
     }
 
     /**
-     * Returns the parent attribute type in the inhertitance tree if one exists
+     * Returns the parent attribute type in the inheritance tree if one exists
      *
-     * @return \Zend\Ldap\Node\Schema\AttributeType\OpenLdap|null
+     * @return OpenLdap|null
      */
     public function getParent()
     {
         if (count($this->_parents) === 1) {
             return $this->_parents[0];
         }
+
+        return null;
     }
 }

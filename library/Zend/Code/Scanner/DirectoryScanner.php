@@ -1,19 +1,43 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ */
 
 namespace Zend\Code\Scanner;
 
-use Zend\Code\Scanner,
-    Zend\Code\Exception,
-    RecursiveDirectoryIterator,
-    RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use Zend\Code\Exception;
 
-class DirectoryScanner implements Scanner
+class DirectoryScanner implements ScannerInterface
 {
-    protected $isScanned            = false;
-    protected $directories          = array();
-    protected $fileScanners         = array();
-    protected $classToFileScanner   = null;
-    
+    /**
+     * @var bool
+     */
+    protected $isScanned = false;
+
+    /**
+     * @var string[]|DirectoryScanner[]
+     */
+    protected $directories = array();
+
+    /**
+     * @var FileScanner[]
+     */
+    protected $fileScanners = array();
+
+    /**
+     * @var array
+     */
+    protected $classToFileScanner = null;
+
+    /**
+     * @param null|string|array $directory
+     */
     public function __construct($directory = null)
     {
         if ($directory) {
@@ -26,7 +50,12 @@ class DirectoryScanner implements Scanner
             }
         }
     }
-    
+
+    /**
+     * @param  DirectoryScanner|string $directory
+     * @return void
+     * @throws Exception\InvalidArgumentException
+     */
     public function addDirectory($directory)
     {
         if ($directory instanceof DirectoryScanner) {
@@ -35,7 +64,8 @@ class DirectoryScanner implements Scanner
             $realDir = realpath($directory);
             if (!$realDir || !is_dir($realDir)) {
                 throw new Exception\InvalidArgumentException(sprintf(
-                    'Directory "%s" does not exist', $realDir
+                    'Directory "%s" does not exist',
+                    $realDir
                 ));
             }
             $this->directories[] = $realDir;
@@ -45,23 +75,34 @@ class DirectoryScanner implements Scanner
             );
         }
     }
-    
+
+    /**
+     * @param  DirectoryScanner $directoryScanner
+     * @return void
+     */
     public function addDirectoryScanner(DirectoryScanner $directoryScanner)
     {
         $this->addDirectory($directoryScanner);
     }
-    
+
+    /**
+     * @param  FileScanner $fileScanner
+     * @return void
+     */
     public function addFileScanner(FileScanner $fileScanner)
     {
         $this->fileScanners[] = $fileScanner;
     }
-    
+
+    /**
+     * @return void
+     */
     protected function scan()
     {
         if ($this->isScanned) {
             return;
         }
-        
+
         // iterate directories creating file scanners
         foreach ($this->directories as $directory) {
             if ($directory instanceof DirectoryScanner) {
@@ -72,20 +113,28 @@ class DirectoryScanner implements Scanner
             } else {
                 $rdi = new RecursiveDirectoryIterator($directory);
                 foreach (new RecursiveIteratorIterator($rdi) as $item) {
-                    if ($item->isFile() && preg_match('#\.php$#', $item->getRealPath())) {
+                    if ($item->isFile() && pathinfo($item->getRealPath(), PATHINFO_EXTENSION) == 'php') {
                         $this->fileScanners[] = new FileScanner($item->getRealPath());
                     }
                 }
             }
         }
-        
+
         $this->isScanned = true;
     }
-    
+
+    /**
+     * @todo implement method
+     */
     public function getNamespaces()
     {
+        // @todo
     }
 
+    /**
+     * @param  bool $returnFileScanners
+     * @return array
+     */
     public function getFiles($returnFileScanners = false)
     {
         $this->scan();
@@ -98,6 +147,9 @@ class DirectoryScanner implements Scanner
         return $return;
     }
 
+    /**
+     * @return array
+     */
     public function getClassNames()
     {
         $this->scan();
@@ -109,10 +161,14 @@ class DirectoryScanner implements Scanner
         return array_keys($this->classToFileScanner);
     }
 
+    /**
+     * @param  bool  $returnDerivedScannerClass
+     * @return array
+     */
     public function getClasses($returnDerivedScannerClass = false)
     {
         $this->scan();
-        
+
         if ($this->classToFileScanner === null) {
             $this->createClassToFileScannerCache();
         }
@@ -125,37 +181,47 @@ class DirectoryScanner implements Scanner
             }
             $returnClasses[] = $classScanner;
         }
-        
+
         return $returnClasses;
     }
-    
+
+    /**
+     * @param  string $class
+     * @return bool
+     */
     public function hasClass($class)
     {
         $this->scan();
-        
+
         if ($this->classToFileScanner === null) {
             $this->createClassToFileScannerCache();
         }
-        
+
         return (isset($this->classToFileScanner[$class]));
     }
 
+    /**
+     * @param  string $class
+     * @param  bool $returnDerivedScannerClass
+     * @return ClassScanner|DerivedClassScanner
+     * @throws Exception\InvalidArgumentException
+     */
     public function getClass($class, $returnDerivedScannerClass = false)
     {
         $this->scan();
-        
+
         if ($this->classToFileScanner === null) {
             $this->createClassToFileScannerCache();
         }
-        
+
         if (!isset($this->classToFileScanner[$class])) {
             throw new Exception\InvalidArgumentException('Class not found.');
         }
 
         /** @var FileScanner $fs */
-        $fs = $this->fileScanners[$this->classToFileScanner[$class]];
+        $fs          = $this->fileScanners[$this->classToFileScanner[$class]];
         $returnClass = $fs->getClass($class);
-        
+
         if (($returnClass instanceof ClassScanner) && $returnDerivedScannerClass) {
             return new DerivedClassScanner($returnClass, $this);
         }
@@ -163,12 +229,17 @@ class DirectoryScanner implements Scanner
         return $returnClass;
     }
 
+    /**
+     * Create class to file scanner cache
+     *
+     * @return void
+     */
     protected function createClassToFileScannerCache()
     {
         if ($this->classToFileScanner !== null) {
             return;
         }
-        
+
         $this->classToFileScanner = array();
         /** @var FileScanner $fileScanner */
         foreach ($this->fileScanners as $fsIndex => $fileScanner) {
@@ -178,7 +249,24 @@ class DirectoryScanner implements Scanner
             }
         }
     }
-    
-    public static function export() {}
-    public function __toString() {} 
+
+    /**
+     * Export
+     *
+     * @todo implement method
+     */
+    public static function export()
+    {
+        // @todo
+    }
+
+    /**
+     * __ToString
+     *
+     * @todo implement method
+     */
+    public function __toString()
+    {
+        // @todo
+    }
 }

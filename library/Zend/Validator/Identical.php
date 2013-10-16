@@ -1,38 +1,17 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator;
 
-use Traversable,
-    Zend\Stdlib\IteratorToArray;
+use Traversable;
+use Zend\Stdlib\ArrayUtils;
 
-/**
- * @uses       \Zend\Validator\AbstractValidator
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
 class Identical extends AbstractValidator
 {
     /**
@@ -46,7 +25,7 @@ class Identical extends AbstractValidator
      * Error messages
      * @var array
      */
-    protected $_messageTemplates = array(
+    protected $messageTemplates = array(
         self::NOT_SAME      => "The two given tokens do not match",
         self::MISSING_TOKEN => 'No token was provided to match against',
     );
@@ -54,7 +33,7 @@ class Identical extends AbstractValidator
     /**
      * @var array
      */
-    protected $_messageVariables = array(
+    protected $messageVariables = array(
         'token' => 'tokenString'
     );
 
@@ -64,18 +43,18 @@ class Identical extends AbstractValidator
      */
     protected $tokenString;
     protected $token;
-    protected $strict = true;
+    protected $strict  = true;
+    protected $literal = false;
 
     /**
      * Sets validator options
      *
      * @param  mixed $token
-     * @return void
      */
     public function __construct($token = null)
     {
         if ($token instanceof Traversable) {
-            $token = IteratorToArray::convert($token);
+            $token = ArrayUtils::iteratorToArray($token);
         }
 
         if (is_array($token) && array_key_exists('token', $token)) {
@@ -83,18 +62,22 @@ class Identical extends AbstractValidator
                 $this->setStrict($token['strict']);
             }
 
+            if (array_key_exists('literal', $token)) {
+                $this->setLiteral($token['literal']);
+            }
+
             $this->setToken($token['token']);
         } elseif (null !== $token) {
             $this->setToken($token);
         }
-        
+
         parent::__construct(is_array($token) ? $token : null);
     }
 
     /**
      * Retrieve token
      *
-     * @return string
+     * @return mixed
      */
     public function getToken()
     {
@@ -105,11 +88,11 @@ class Identical extends AbstractValidator
      * Set token against which to compare
      *
      * @param  mixed $token
-     * @return \Zend\Validator\Identical
+     * @return Identical
      */
     public function setToken($token)
     {
-        $this->tokenString = (string) $token;
+        $this->tokenString = (is_array($token) ? var_export($token, true) : (string) $token);
         $this->token       = $token;
         return $this;
     }
@@ -117,7 +100,7 @@ class Identical extends AbstractValidator
     /**
      * Returns the strict parameter
      *
-     * @return boolean
+     * @return bool
      */
     public function getStrict()
     {
@@ -127,11 +110,34 @@ class Identical extends AbstractValidator
     /**
      * Sets the strict parameter
      *
-     * @param Zend\Validator\Identical
+     * @param  bool $strict
+     * @return Identical
      */
     public function setStrict($strict)
     {
-        $this->strict = (boolean) $strict;
+        $this->strict = (bool) $strict;
+        return $this;
+    }
+
+    /**
+     * Returns the literal parameter
+     *
+     * @return bool
+     */
+    public function getLiteral()
+    {
+        return $this->literal;
+    }
+
+    /**
+     * Sets the literal parameter
+     *
+     * @param  bool $literal
+     * @return Identical
+     */
+    public function setLiteral($literal)
+    {
+        $this->literal = (bool) $literal;
         return $this;
     }
 
@@ -141,16 +147,34 @@ class Identical extends AbstractValidator
      *
      * @param  mixed $value
      * @param  array $context
-     * @return boolean
+     * @return bool
+     * @throws Exception\RuntimeException if the token doesn't exist in the context array
      */
-    public function isValid($value, $context = null)
+    public function isValid($value, array $context = null)
     {
-        $this->setValue((string) $value);
+        $this->setValue($value);
 
-        if (($context !== null) && isset($context) && array_key_exists($this->getToken(), $context)) {
-            $token = $context[$this->getToken()];
-        } else {
-            $token = $this->getToken();
+        $token = $this->getToken();
+
+        if (!$this->getLiteral() && $context !== null) {
+            if (is_array($token)) {
+                while (is_array($token)) {
+                    $key = key($token);
+                    if (!isset($context[$key])) {
+                        break;
+                    }
+                    $context = $context[$key];
+                    $token   = $token[$key];
+                }
+            }
+
+            // if $token is an array it means the above loop didn't went all the way down to the leaf,
+            // so the $token structure doesn't match the $context structure
+            if (is_array($token) || !isset($context[$token])) {
+                $token = $this->getToken();
+            } else {
+                $token = $context[$token];
+            }
         }
 
         if ($token === null) {

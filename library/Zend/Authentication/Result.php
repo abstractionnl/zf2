@@ -1,34 +1,14 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Authentication
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Authentication;
 
-/**
- * @category   Zend
- * @package    Zend_Authentication
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
 class Result
 {
     /**
@@ -66,14 +46,14 @@ class Result
      *
      * @var int
      */
-    protected $_code;
+    protected $code;
 
     /**
      * The identity used in the authentication attempt
      *
      * @var mixed
      */
-    protected $_identity;
+    protected $identity;
 
     /**
      * An array of string reasons why the authentication attempt was unsuccessful
@@ -82,7 +62,7 @@ class Result
      *
      * @var array
      */
-    protected $_messages;
+    protected $messages;
 
     /**
      * Sets the result code, identity, and failure messages
@@ -90,31 +70,22 @@ class Result
      * @param  int     $code
      * @param  mixed   $identity
      * @param  array   $messages
-     * @return void
      */
     public function __construct($code, $identity, array $messages = array())
     {
-        $code = (int) $code;
-
-        if ($code < self::FAILURE_UNCATEGORIZED) {
-            $code = self::FAILURE;
-        } elseif ($code > self::SUCCESS ) {
-            $code = 1;
-        }
-
-        $this->_code     = $code;
-        $this->_identity = $identity;
-        $this->_messages = $messages;
+        $this->code     = (int) $code;
+        $this->identity = $identity;
+        $this->messages = $messages;
     }
 
     /**
      * Returns whether the result represents a successful authentication attempt
      *
-     * @return boolean
+     * @return bool
      */
     public function isValid()
     {
-        return ($this->_code > 0) ? true : false;
+        return ($this->code > 0) ? true : false;
     }
 
     /**
@@ -124,7 +95,7 @@ class Result
      */
     public function getCode()
     {
-        return $this->_code;
+        return $this->code;
     }
 
     /**
@@ -134,7 +105,7 @@ class Result
      */
     public function getIdentity()
     {
-        return $this->_identity;
+        return $this->identity;
     }
 
     /**
@@ -146,6 +117,6 @@ class Result
      */
     public function getMessages()
     {
-        return $this->_messages;
+        return $this->messages;
     }
 }

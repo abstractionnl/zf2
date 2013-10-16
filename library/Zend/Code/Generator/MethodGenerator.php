@@ -1,55 +1,25 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_CodeGenerator
- * @subpackage PHP
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Code\Generator;
 
 use Zend\Code\Reflection\MethodReflection;
 
-/**
- * @uses       \Zend\Code\GeneratorDocblock
- * @uses       \Zend\Code\Generator\Exception
- * @uses       \Zend\Code\Generator\PhpMember\AbstractMember
- * @uses       \Zend\Code\Generator\PhpParameter
- * @category   Zend
- * @package    Zend_CodeGenerator
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
 class MethodGenerator extends AbstractMemberGenerator
 {
     /**
-     * @var DocblockGenerator
+     * @var DocBlockGenerator
      */
-    protected $docblock = null;
+    protected $docBlock = null;
 
     /**
-     * @var bool
-     */
-    protected $isFinal = false;
-
-    /**
-     * @var array
+     * @var ParameterGenerator[]
      */
     protected $parameters = array();
 
@@ -59,20 +29,18 @@ class MethodGenerator extends AbstractMemberGenerator
     protected $body = null;
 
     /**
-     * fromReflection()
-     *
-     * @param \Zend\Code\Reflection\MethodReflection $reflectionMethod
-     * @return \MethodGenerator\Code\Generator\PhpMethod
+     * @param  MethodReflection $reflectionMethod
+     * @return MethodGenerator
      */
     public static function fromReflection(MethodReflection $reflectionMethod)
     {
-        $method = new self();
+        $method = new static();
 
         $method->setSourceContent($reflectionMethod->getContents(false));
         $method->setSourceDirty(false);
 
         if ($reflectionMethod->getDocComment() != '') {
-            $method->setDocblock(DocblockGenerator::fromReflection($reflectionMethod->getDocblock()));
+            $method->setDocBlock(DocBlockGenerator::fromReflection($reflectionMethod->getDocBlock()));
         }
 
         $method->setFinal($reflectionMethod->isFinal());
@@ -98,62 +66,132 @@ class MethodGenerator extends AbstractMemberGenerator
         return $method;
     }
 
-    public function __construct($name = null, array $parameters = array(), $flags = self::FLAG_PUBLIC, $body = null, $docblock = null)
+    /**
+     * Generate from array
+     *
+     * @configkey name           string        [required] Class Name
+     * @configkey docblock       string        The docblock information
+     * @configkey flags          int           Flags, one of MethodGenerator::FLAG_ABSTRACT MethodGenerator::FLAG_FINAL
+     * @configkey parameters     string        Class which this class is extending
+     * @configkey body           string
+     * @configkey abstract       bool
+     * @configkey final          bool
+     * @configkey static         bool
+     * @configkey visibility     string
+     *
+     * @throws Exception\InvalidArgumentException
+     * @param  array $array
+     * @return MethodGenerator
+     */
+    public static function fromArray(array $array)
     {
-        if ($name !== null) {
+        if (!isset($array['name'])) {
+            throw new Exception\InvalidArgumentException(
+                'Method generator requires that a name is provided for this object'
+            );
+        }
+
+        $method = new static($array['name']);
+        foreach ($array as $name => $value) {
+            // normalize key
+            switch (strtolower(str_replace(array('.', '-', '_'), '', $name))) {
+                case 'docblock':
+                    $docBlock = ($value instanceof DocBlockGenerator) ? $value : DocBlockGenerator::fromArray($value);
+                    $method->setDocBlock($docBlock);
+                    break;
+                case 'flags':
+                    $method->setFlags($value);
+                    break;
+                case 'parameters':
+                    $method->setParameters($value);
+                    break;
+                case 'body':
+                    $method->setBody($value);
+                    break;
+                case 'abstract':
+                    $method->setAbstract($value);
+                    break;
+                case 'final':
+                    $method->setFinal($value);
+                    break;
+                case 'static':
+                    $method->setStatic($value);
+                    break;
+                case 'visibility':
+                    $method->setVisibility($value);
+                    break;
+            }
+        }
+
+        return $method;
+    }
+
+    /**
+     * @param  string $name
+     * @param  array $parameters
+     * @param  int|array $flags
+     * @param  string $body
+     * @param  DocBlockGenerator|string $docBlock
+     */
+    public function __construct($name = null, array $parameters = array(), $flags = self::FLAG_PUBLIC, $body = null,
+                                $docBlock = null)
+    {
+        if ($name) {
             $this->setName($name);
         }
-        if ($parameters !== array()) {
+        if ($parameters) {
             $this->setParameters($parameters);
         }
         if ($flags !== self::FLAG_PUBLIC) {
             $this->setFlags($flags);
         }
-        if ($body !== null) {
+        if ($body) {
             $this->setBody($body);
         }
-        if ($docblock !== null) {
-            $this->setDocblock($docblock);
+        if ($docBlock) {
+            $this->setDocBlock($docBlock);
         }
     }
 
     /**
-     * setParameters()
-     *
-     * @param array $parameters
-     * @return \MethodGenerator\Code\Generator\PhpMethod
+     * @param  array $parameters
+     * @return MethodGenerator
      */
     public function setParameters(array $parameters)
     {
         foreach ($parameters as $parameter) {
             $this->setParameter($parameter);
         }
+
         return $this;
     }
 
     /**
-     * setParameter()
-     *
-     * @param ParameterGenerator|string $parameter
-     * @return \MethodGenerator\Code\Generator\PhpMethod
+     * @param  ParameterGenerator|string $parameter
+     * @throws Exception\InvalidArgumentException
+     * @return MethodGenerator
      */
     public function setParameter($parameter)
     {
         if (is_string($parameter)) {
             $parameter = new ParameterGenerator($parameter);
         } elseif (!$parameter instanceof ParameterGenerator) {
-            throw new Exception\InvalidArgumentException('setParameter() expects either an array of method options or an instance of Zend_CodeGenerator_Php_Parameter');
+            throw new Exception\InvalidArgumentException(sprintf(
+                '%s is expecting either a string, array or an instance of %s\ParameterGenerator',
+                __METHOD__,
+                __NAMESPACE__
+            ));
         }
+
         $parameterName = $parameter->getName();
 
         $this->parameters[$parameterName] = $parameter;
+
         return $this;
     }
 
     /**
-     * getParameters()
-     *
-     * @return array Array of \Zend\Code\Generator\Parameter\Parameter
+     * @return ParameterGenerator[]
      */
     public function getParameters()
     {
@@ -161,10 +199,8 @@ class MethodGenerator extends AbstractMemberGenerator
     }
 
     /**
-     * setBody()
-     *
-     * @param string $body
-     * @return \MethodGenerator\Code\Generator\PhpMethod
+     * @param  string $body
+     * @return MethodGenerator
      */
     public function setBody($body)
     {
@@ -173,8 +209,6 @@ class MethodGenerator extends AbstractMemberGenerator
     }
 
     /**
-     * getBody()
-     *
      * @return string
      */
     public function getBody()
@@ -183,8 +217,6 @@ class MethodGenerator extends AbstractMemberGenerator
     }
 
     /**
-     * generate()
-     *
      * @return string
      */
     public function generate()
@@ -193,9 +225,9 @@ class MethodGenerator extends AbstractMemberGenerator
 
         $indent = $this->getIndentation();
 
-        if (($docblock = $this->getDocblock()) !== null) {
-            $docblock->setIndentation($indent);
-            $output .= $docblock->generate();
+        if (($docBlock = $this->getDocBlock()) !== null) {
+            $docBlock->setIndentation($indent);
+            $output .= $docBlock->generate();
         }
 
         $output .= $indent;
@@ -213,17 +245,17 @@ class MethodGenerator extends AbstractMemberGenerator
         $parameters = $this->getParameters();
         if (!empty($parameters)) {
             foreach ($parameters as $parameter) {
-                $parameterOuput[] = $parameter->generate();
+                $parameterOutput[] = $parameter->generate();
             }
 
-            $output .= implode(', ', $parameterOuput);
+            $output .= implode(', ', $parameterOutput);
         }
 
         $output .= ')' . self::LINE_FEED . $indent . '{' . self::LINE_FEED;
 
         if ($this->body) {
             $output .= preg_replace('#^(.+?)$#m', $indent . $indent . '$1', trim($this->body))
-                    .  self::LINE_FEED;
+                . self::LINE_FEED;
         }
 
         $output .= $indent . '}' . self::LINE_FEED;
@@ -235,5 +267,4 @@ class MethodGenerator extends AbstractMemberGenerator
     {
         return $this->generate();
     }
-
 }

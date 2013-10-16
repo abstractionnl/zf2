@@ -1,36 +1,16 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Object
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Barcode\Object;
 
 /**
  * Class for generate Royal maim barcode
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Royalmail extends AbstractObject
 {
@@ -85,7 +65,7 @@ class Royalmail extends AbstractObject
 
     /**
      * Width of the barcode (in pixels)
-     * @return integer
+     * @return int
      */
     protected function calculateBarcodeWidth()
     {
@@ -112,21 +92,21 @@ class Royalmail extends AbstractObject
         $barcodeTable = array();
 
         // Start character (1)
-        $barcodeTable[] = array(1 , $this->barThinWidth , 0 , 5/8);
-        $barcodeTable[] = array(0 , $this->barThinWidth , 0 , 1);
+        $barcodeTable[] = array(1, $this->barThinWidth, 0, 5/8);
+        $barcodeTable[] = array(0, $this->barThinWidth, 0, 1);
 
         // Text to encode
         $textTable = str_split($this->getText());
         foreach ($textTable as $char) {
             $bars = str_split($this->codingMap[$char]);
             foreach ($bars as $b) {
-                $barcodeTable[] = array(1 , $this->barThinWidth , ($b > 1 ? 3/8 : 0) , ($b % 2 ? 5/8 : 1));
-                $barcodeTable[] = array(0 , $this->barThinWidth , 0 , 1);
+                $barcodeTable[] = array(1, $this->barThinWidth, ($b > 1 ? 3/8 : 0), ($b % 2 ? 5/8 : 1));
+                $barcodeTable[] = array(0, $this->barThinWidth, 0, 1);
             }
         }
 
         // Stop character (1)
-        $barcodeTable[] = array(1 , $this->barThinWidth , 0 , 1);
+        $barcodeTable[] = array(1, $this->barThinWidth, 0, 1);
         return $barcodeTable;
     }
 
@@ -142,7 +122,7 @@ class Royalmail extends AbstractObject
         $values   = str_split($text);
         $rowvalue = 0;
         $colvalue = 0;
-        foreach($values as $row) {
+        foreach ($values as $row) {
             $rowvalue += $this->rows[$row];
             $colvalue += $this->columns[$row];
         }

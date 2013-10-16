@@ -1,79 +1,98 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_View
- * @subpackage Helper
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\View\Helper;
 
-use Zend\Layout\Layout as BaseLayout;
+use Zend\View\Exception;
+use Zend\View\Model\ModelInterface as Model;
 
 /**
  * View helper for retrieving layout object
- *
- * @uses       \Zend\Layout\Layout
- * @uses       \Zend\View\Helper\AbstractHelper
- * @package    Zend_View
- * @subpackage Helper
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Layout extends AbstractHelper
 {
-    /** @var BaseLayout */
-    protected $_layout;
+    /**
+     * @var ViewModel
+     */
+    protected $viewModelHelper;
 
     /**
-     * Get layout object
+     * Set layout template or retrieve "layout" view model
      *
-     * @return BaseLayout
+     * If no arguments are given, grabs the "root" or "layout" view model.
+     * Otherwise, attempts to set the template for that view model.
+     *
+     * @param  null|string $template
+     * @return Layout
      */
-    public function getLayout()
+    public function __invoke($template = null)
     {
-        if (null === $this->_layout) {
-            $this->_layout = new BaseLayout();
+        if (null === $template) {
+            return $this->getRoot();
         }
 
-        return $this->_layout;
+        return $this->setTemplate($template);
     }
 
     /**
-     * Set layout object
+     * Get layout template
      *
-     * @param  BaseLayout $layout
+     * @return string
+     */
+    public function getLayout()
+    {
+        return $this->getRoot()->getTemplate();
+    }
+
+    /**
+     * Get the root view model
+     *
+     * @throws Exception\RuntimeException
+     * @return null|Model
+     */
+    protected function getRoot()
+    {
+        $helper = $this->getViewModelHelper();
+
+        if (!$helper->hasRoot()) {
+            throw new Exception\RuntimeException(sprintf(
+                '%s: no view model currently registered as root in renderer',
+                __METHOD__
+            ));
+        }
+
+        return $helper->getRoot();
+    }
+
+    /**
+     * Set layout template
+     *
+     * @param  string $template
      * @return Layout
      */
-    public function setLayout(BaseLayout $layout)
+    public function setTemplate($template)
     {
-        $this->_layout = $layout;
+        $this->getRoot()->setTemplate((string) $template);
         return $this;
     }
 
     /**
-     * Return layout object
+     * Retrieve the view model helper
      *
-     * @return BaseLayout
+     * @return ViewModel
      */
-    public function __invoke()
+    protected function getViewModelHelper()
     {
-        return $this->getLayout();
+        if (null === $this->viewModelHelper) {
+            $this->viewModelHelper = $this->getView()->plugin('view_model');
+        }
+
+        return $this->viewModelHelper;
     }
 }

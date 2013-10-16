@@ -1,42 +1,22 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Object
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Barcode\Object;
 
 /**
  * Class for generate Interleaved 2 of 5 barcode
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Code25interleaved extends Code25
 {
     /**
      * Drawing of bearer bars
-     * @var boolean
+     * @var bool
      */
     private $withBearerBars = false;
 
@@ -51,7 +31,7 @@ class Code25interleaved extends Code25
 
     /**
      * Activate/deactivate drawing of bearer bars
-     * @param boolean $value
+     * @param  bool $value
      * @return Code25
      */
     public function setWithBearerBars($value)
@@ -62,7 +42,7 @@ class Code25interleaved extends Code25
 
     /**
      * Retrieve if bearer bars are enabled
-     * @return boolean
+     * @return bool
      */
     public function getWithBearerBars()
     {
@@ -71,7 +51,7 @@ class Code25interleaved extends Code25
 
     /**
      * Width of the barcode (in pixels)
-     * @return integer
+     * @return int
      */
     protected function calculateBarcodeWidth()
     {
@@ -101,7 +81,7 @@ class Code25interleaved extends Code25
 
         // Encoded $text
         $text = $this->getText();
-        for ($i = 0; $i < strlen($text); $i += 2) { // Draw 2 chars at a time
+        for ($i = 0, $len = strlen($text); $i < $len; $i += 2) { // Draw 2 chars at a time
             $char1 = substr($text, $i, 1);
             $char2 = substr($text, $i + 1, 1);
 
@@ -118,14 +98,14 @@ class Code25interleaved extends Code25
                 $barWidth = (substr($this->codingMap[$char2], $ibar, 1))
                           ? $this->barThickWidth
                           : $this->barThinWidth;
-                $barcodeTable[] = array(0, $barWidth, 0 , 1);
+                $barcodeTable[] = array(0, $barWidth, 0, 1);
             }
         }
 
         // Stop character (100)
-        $barcodeTable[] = array(1 , $this->barThickWidth, 0, 1);
-        $barcodeTable[] = array(0 , $this->barThinWidth,  0, 1);
-        $barcodeTable[] = array(1 , $this->barThinWidth,  0, 1);
+        $barcodeTable[] = array(1, $this->barThickWidth, 0, 1);
+        $barcodeTable[] = array(0, $this->barThinWidth, 0, 1);
+        $barcodeTable[] = array(1, $this->barThinWidth, 0, 1);
         return $barcodeTable;
     }
 

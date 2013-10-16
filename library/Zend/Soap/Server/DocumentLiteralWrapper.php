@@ -1,32 +1,16 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Soap
- * @subpackage Server
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Soap\Server;
 
-use ReflectionClass;
-use Zend\Soap\Exception\UnexpectedValueException;
-use Zend\Soap\Exception\BadMethodCallException;
+use ReflectionObject;
+use Zend\Soap\Exception;
 
 /**
  * Wraps WSDL Document/Literal Style service objects to hide SOAP request
@@ -75,30 +59,24 @@ use Zend\Soap\Exception\BadMethodCallException;
  * of SOAP this wrapper service handles the parsing between the formats.
  *
  * @example
- *
+ * <code>
  *  $service = new MyCalculatorService();
  *  $soap = new \Zend\Soap\Server($wsdlFile);
  *  $soap->setObject(new \Zend\Soap\Server\DocumentLiteralWrapper($service));
  *  $soap->handle();
- *
- * @uses ReflectionClass
- * @category   Zend
- * @package    Zend_Soap
- * @subpackage Server
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * </code>
  */
 class DocumentLiteralWrapper
 {
     /**
      * @var object
      */
-    protected $_object;
+    protected $object;
 
     /**
      * @var ReflectionObject
      */
-    protected $_reflection;
+    protected $reflection;
 
     /**
      * Pass Service object to the constructor
@@ -107,15 +85,15 @@ class DocumentLiteralWrapper
      */
     public function __construct($object)
     {
-        $this->_object = $object;
-        $this->_reflection = new \ReflectionObject($this->_object);
+        $this->object = $object;
+        $this->reflection = new ReflectionObject($this->object);
     }
 
     /**
      * Proxy method that does the heavy document/literal decomposing.
      *
-     * @param string $method
-     * @param array $args
+     * @param  string $method
+     * @param  array $args
      * @return mixed
      */
     public function __call($method, $args)
@@ -124,7 +102,7 @@ class DocumentLiteralWrapper
         $this->_assertServiceDelegateHasMethod($method);
 
         $delegateArgs = $this->_parseArguments($method, $args[0]);
-        $ret = call_user_func_array(array($this->_object, $method), $delegateArgs);
+        $ret          = call_user_func_array(array($this->object, $method), $delegateArgs);
         return $this->_getResultMessage($method, $ret);
     }
 
@@ -132,13 +110,14 @@ class DocumentLiteralWrapper
      * Parse the document/literal wrapper into arguments to call the real
      * service.
      *
-     * @param string $method
-     * @param object $document
+     * @param  string $method
+     * @param  object $document
      * @return array
+     * @throws Exception\UnexpectedValueException
      */
     protected function _parseArguments($method, $document)
     {
-        $reflMethod = $this->_reflection->getMethod($method);
+        $reflMethod = $this->reflection->getMethod($method);
         $params = array();
         foreach ($reflMethod->getParameters() as $param) {
             $params[$param->getName()] = $param;
@@ -147,38 +126,57 @@ class DocumentLiteralWrapper
         $delegateArgs = array();
         foreach (get_object_vars($document) as $argName => $argValue) {
             if (!isset($params[$argName])) {
-                throw new UnexpectedValueException(sprintf(
-                    "Recieved unknown argument %s which is not an argument to %s::%s",
-                    get_class($this->_object), $method
+                throw new Exception\UnexpectedValueException(sprintf(
+                    "Received unknown argument %s which is not an argument to %s::%s",
+                    $argName,
+                    get_class($this->object),
+                    $method
                 ));
             }
             $delegateArgs[$params[$argName]->getPosition()] = $argValue;
         }
+
         return $delegateArgs;
     }
 
+    /**
+     * Returns result message content
+     *
+     * @param  string $method
+     * @param  mixed $ret
+     * @return array
+     */
     protected function _getResultMessage($method, $ret)
     {
-        return array($method.'Result' => $ret);
+        return array($method . 'Result' => $ret);
     }
 
+    /**
+     * @param  string $method
+     * @throws Exception\BadMethodCallException
+     */
     protected function _assertServiceDelegateHasMethod($method)
     {
-        if ( !$this->_reflection->hasMethod($method) ) {
-            throw new BadMethodCallException(sprintf(
+        if (!$this->reflection->hasMethod($method)) {
+            throw new Exception\BadMethodCallException(sprintf(
                 "Method %s does not exist on delegate object %s",
-                $method, get_class($this->_object)
+                $method,
+                get_class($this->object)
             ));
         }
     }
 
-    protected function _assertOnlyOneArgument($args)
+    /**
+     * @param  array $args
+     * @throws Exception\UnexpectedValueException
+     */
+    protected function _assertOnlyOneArgument(array $args)
     {
         if (count($args) != 1) {
-            throw new UnexpectedValueException(sprintf(
+            throw new Exception\UnexpectedValueException(sprintf(
                 "Expecting exactly one argument that is the document/literal wrapper, got %d",
-                count($args)));
+                count($args)
+            ));
         }
     }
 }
-

@@ -1,69 +1,74 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_View
- * @subpackage Helper
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\View\Helper;
 
-use Zend\View,
-    Zend\View\Exception;
+use stdClass;
+use Zend\View;
+use Zend\View\Exception;
 
 /**
  * Zend_Layout_View_Helper_HeadLink
  *
- * @see        http://www.w3.org/TR/xhtml1/dtds.html
- * @uses       \Zend\View\Exception
- * @uses       \Zend\View\Helper\Placeholder\Container\AbstractContainer
- * @uses       \Zend\View\Helper\Placeholder\Container\Standalone
- * @package    Zend_View
- * @subpackage Helper
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @see http://www.w3.org/TR/xhtml1/dtds.html
+ *
+ * Creates the following virtual methods:
+ * @method HeadLink appendStylesheet($href, $media, $conditionalStylesheet, $extras)
+ * @method HeadLink offsetSetStylesheet($index, $href, $media, $conditionalStylesheet, $extras)
+ * @method HeadLink prependStylesheet($href, $media, $conditionalStylesheet, $extras)
+ * @method HeadLink setStylesheet($href, $media, $conditionalStylesheet, $extras)
+ * @method HeadLink appendAlternate($href, $type, $title, $extras)
+ * @method HeadLink offsetSetAlternate($index, $href, $type, $title, $extras)
+ * @method HeadLink prependAlternate($href, $type, $title, $extras)
+ * @method HeadLink setAlternate($href, $type, $title, $extras)
  */
-class HeadLink extends Placeholder\Container\Standalone
+class HeadLink extends Placeholder\Container\AbstractStandalone
 {
     /**
-     * $_validAttributes
+     * Allowed attributes
      *
      * @var array
      */
-    protected $_itemKeys = array('charset', 'href', 'hreflang', 'media', 'rel', 'rev', 'type', 'title', 'extras');
+    protected $itemKeys = array('charset', 'href', 'hreflang', 'id', 'media', 'rel', 'rev', 'type', 'title', 'extras');
 
     /**
-     * @var string registry key
+     * Registry key for placeholder
+     *
+     * @var string
      */
-    protected $_regKey = 'Zend_View_Helper_HeadLink';
+    protected $regKey = 'Zend_View_Helper_HeadLink';
 
     /**
      * Constructor
      *
      * Use PHP_EOL as separator
-     *
-     * @return void
      */
     public function __construct()
     {
         parent::__construct();
+
         $this->setSeparator(PHP_EOL);
+    }
+
+    /**
+     * Proxy to __invoke()
+     *
+     * Allows calling $helper->headLink(), but, more importantly, chaining calls
+     * like ->appendStylesheet()->headLink().
+     *
+     * @param  array  $attributes
+     * @param  string $placement
+     * @return HeadLink
+     */
+    public function headLink(array $attributes = null, $placement = Placeholder\Container\AbstractContainer::APPEND)
+    {
+        return call_user_func_array(array($this, '__invoke'), func_get_args());
     }
 
     /**
@@ -72,7 +77,9 @@ class HeadLink extends Placeholder\Container\Standalone
      * Returns current object instance. Optionally, allows passing array of
      * values to build link.
      *
-     * @return \Zend\View\Helper\HeadLink
+     * @param  array  $attributes
+     * @param  string $placement
+     * @return HeadLink
      */
     public function __invoke(array $attributes = null, $placement = Placeholder\Container\AbstractContainer::APPEND)
     {
@@ -91,21 +98,12 @@ class HeadLink extends Placeholder\Container\Standalone
                     break;
             }
         }
+
         return $this;
     }
 
     /**
      * Overload method access
-     *
-     * Creates the following virtual methods:
-     * - appendStylesheet($href, $media, $conditionalStylesheet, $extras)
-     * - offsetSetStylesheet($index, $href, $media, $conditionalStylesheet, $extras)
-     * - prependStylesheet($href, $media, $conditionalStylesheet, $extras)
-     * - setStylesheet($href, $media, $conditionalStylesheet, $extras)
-     * - appendAlternate($href, $type, $title, $extras)
-     * - offsetSetAlternate($index, $href, $type, $title, $extras)
-     * - prependAlternate($href, $type, $title, $extras)
-     * - setAlternate($href, $type, $title, $extras)
      *
      * Items that may be added in the future:
      * - Navigation?  need to find docs on this
@@ -125,14 +123,14 @@ class HeadLink extends Placeholder\Container\Standalone
      *   - public function appendSection()
      *   - public function appendSubsection()
      *
-     * @param mixed $method
-     * @param mixed $args
-     * @return void
+     * @param  mixed $method
+     * @param  mixed $args
      * @throws Exception\BadMethodCallException
+     * @return void
      */
     public function __call($method, $args)
     {
-        if (preg_match('/^(?P<action>set|(ap|pre)pend|offsetSet)(?P<type>Stylesheet|Alternate)$/', $method, $matches)) {
+        if (preg_match('/^(?P<action>set|(ap|pre)pend|offsetSet)(?P<type>Stylesheet|Alternate|Prev|Next)$/', $method, $matches)) {
             $argc   = count($args);
             $action = $matches['action'];
             $type   = $matches['type'];
@@ -177,17 +175,17 @@ class HeadLink extends Placeholder\Container\Standalone
      * Check if value is valid
      *
      * @param  mixed $value
-     * @return boolean
+     * @return bool
      */
-    protected function _isValid($value)
+    protected function isValid($value)
     {
-        if (!$value instanceof \stdClass) {
+        if (!$value instanceof stdClass) {
             return false;
         }
 
         $vars         = get_object_vars($value);
         $keys         = array_keys($vars);
-        $intersection = array_intersect($this->_itemKeys, $keys);
+        $intersection = array_intersect($this->itemKeys, $keys);
         if (empty($intersection)) {
             return false;
         }
@@ -199,12 +197,12 @@ class HeadLink extends Placeholder\Container\Standalone
      * append()
      *
      * @param  array $value
-     * @return void
      * @throws Exception\InvalidArgumentException
+     * @return void
      */
     public function append($value)
     {
-        if (!$this->_isValid($value)) {
+        if (!$this->isValid($value)) {
             throw new Exception\InvalidArgumentException(
                 'append() expects a data token; please use one of the custom append*() methods'
             );
@@ -217,13 +215,13 @@ class HeadLink extends Placeholder\Container\Standalone
      * offsetSet()
      *
      * @param  string|int $index
-     * @param  array $value
-     * @return void
+     * @param  array      $value
      * @throws Exception\InvalidArgumentException
+     * @return void
      */
     public function offsetSet($index, $value)
     {
-        if (!$this->_isValid($value)) {
+        if (!$this->isValid($value)) {
             throw new Exception\InvalidArgumentException(
                 'offsetSet() expects a data token; please use one of the custom offsetSet*() methods'
             );
@@ -236,12 +234,12 @@ class HeadLink extends Placeholder\Container\Standalone
      * prepend()
      *
      * @param  array $value
-     * @return Zend_Layout_ViewHelper_HeadLink
      * @throws Exception\InvalidArgumentException
+     * @return HeadLink
      */
     public function prepend($value)
     {
-        if (!$this->_isValid($value)) {
+        if (!$this->isValid($value)) {
             throw new Exception\InvalidArgumentException(
                 'prepend() expects a data token; please use one of the custom prepend*() methods'
             );
@@ -254,12 +252,12 @@ class HeadLink extends Placeholder\Container\Standalone
      * set()
      *
      * @param  array $value
-     * @return Zend_Layout_ViewHelper_HeadLink
      * @throws Exception\InvalidArgumentException
+     * @return HeadLink
      */
     public function set($value)
     {
-        if (!$this->_isValid($value)) {
+        if (!$this->isValid($value)) {
             throw new Exception\InvalidArgumentException(
                 'set() expects a data token; please use one of the custom set*() methods'
             );
@@ -275,30 +273,30 @@ class HeadLink extends Placeholder\Container\Standalone
      * @param  stdClass $item
      * @return string
      */
-    public function itemToString(\stdClass $item)
+    public function itemToString(stdClass $item)
     {
         $attributes = (array) $item;
-        $link       = '<link ';
+        $link       = '<link';
 
-        foreach ($this->_itemKeys as $itemKey) {
+        foreach ($this->itemKeys as $itemKey) {
             if (isset($attributes[$itemKey])) {
-                if(is_array($attributes[$itemKey])) {
-                    foreach($attributes[$itemKey] as $key => $value) {
-                        $link .= sprintf('%s="%s" ', $key, ($this->_autoEscape) ? $this->_escape($value) : $value);
+                if (is_array($attributes[$itemKey])) {
+                    foreach ($attributes[$itemKey] as $key => $value) {
+                        $link .= sprintf(' %s="%s"', $key, ($this->autoEscape) ? $this->escape($value) : $value);
                     }
                 } else {
-                    $link .= sprintf('%s="%s" ', $itemKey, ($this->_autoEscape) ? $this->_escape($attributes[$itemKey]) : $attributes[$itemKey]);
+                    $link .= sprintf(' %s="%s"', $itemKey, ($this->autoEscape) ? $this->escape($attributes[$itemKey]) : $attributes[$itemKey]);
                 }
             }
         }
 
-        if ($this->view instanceof \Zend\Loader\Pluggable) {
-            $link .= ($this->view->plugin('doctype')->isXhtml()) ? '/>' : '>';
+        if (method_exists($this->view, 'plugin')) {
+            $link .= ($this->view->plugin('doctype')->isXhtml()) ? ' />' : '>';
         } else {
-            $link .= '/>';
+            $link .= ' />';
         }
 
-        if (($link == '<link />') || ($link == '<link >')) {
+        if (($link == '<link />') || ($link == '<link>')) {
             return '';
         }
 
@@ -330,7 +328,7 @@ class HeadLink extends Placeholder\Container\Standalone
             $items[] = $this->itemToString($item);
         }
 
-        return $indent . implode($this->_escape($this->getSeparator()) . $indent, $items);
+        return $indent . implode($this->escape($this->getSeparator()) . $indent, $items);
     }
 
     /**
@@ -341,15 +339,14 @@ class HeadLink extends Placeholder\Container\Standalone
      */
     public function createData(array $attributes)
     {
-        $data = (object) $attributes;
-        return $data;
+        return (object) $attributes;
     }
 
     /**
      * Create item for stylesheet link item
      *
      * @param  array $args
-     * @return stdClass|false Returns fals if stylesheet is a duplicate
+     * @return stdClass|false Returns false if stylesheet is a duplicate
      */
     public function createDataStylesheet(array $args)
     {
@@ -359,13 +356,13 @@ class HeadLink extends Placeholder\Container\Standalone
         $conditionalStylesheet = false;
         $href                  = array_shift($args);
 
-        if ($this->_isDuplicateStylesheet($href)) {
+        if ($this->isDuplicateStylesheet($href)) {
             return false;
         }
 
         if (0 < count($args)) {
             $media = array_shift($args);
-            if(is_array($media)) {
+            if (is_array($media)) {
                 $media = implode(',', $media);
             } else {
                 $media = (string) $media;
@@ -373,19 +370,20 @@ class HeadLink extends Placeholder\Container\Standalone
         }
         if (0 < count($args)) {
             $conditionalStylesheet = array_shift($args);
-            if(!empty($conditionalStylesheet) && is_string($conditionalStylesheet)) {
+            if (!empty($conditionalStylesheet) && is_string($conditionalStylesheet)) {
                 $conditionalStylesheet = (string) $conditionalStylesheet;
             } else {
                 $conditionalStylesheet = null;
             }
         }
 
-        if(0 < count($args) && is_array($args[0])) {
+        if (0 < count($args) && is_array($args[0])) {
             $extras = array_shift($args);
             $extras = (array) $extras;
         }
 
         $attributes = compact('rel', 'type', 'href', 'media', 'conditionalStylesheet', 'extras');
+
         return $this->createData($attributes);
     }
 
@@ -395,13 +393,14 @@ class HeadLink extends Placeholder\Container\Standalone
      * @param  string $uri
      * @return bool
      */
-    protected function _isDuplicateStylesheet($uri)
+    protected function isDuplicateStylesheet($uri)
     {
         foreach ($this->getContainer() as $item) {
             if (($item->rel == 'stylesheet') && ($item->href == $uri)) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -409,8 +408,8 @@ class HeadLink extends Placeholder\Container\Standalone
      * Create item for alternate link item
      *
      * @param  array $args
-     * @return stdClass
      * @throws Exception\InvalidArgumentException
+     * @return stdClass
      */
     public function createDataAlternate(array $args)
     {
@@ -426,11 +425,11 @@ class HeadLink extends Placeholder\Container\Standalone
         $type  = array_shift($args);
         $title = array_shift($args);
 
-        if(0 < count($args) && is_array($args[0])) {
+        if (0 < count($args) && is_array($args[0])) {
             $extras = array_shift($args);
             $extras = (array) $extras;
 
-            if(isset($extras['media']) && is_array($extras['media'])) {
+            if (isset($extras['media']) && is_array($extras['media'])) {
                 $extras['media'] = implode(',', $extras['media']);
             }
         }
@@ -440,6 +439,39 @@ class HeadLink extends Placeholder\Container\Standalone
         $title = (string) $title;
 
         $attributes = compact('rel', 'href', 'type', 'title', 'extras');
+
+        return $this->createData($attributes);
+    }
+
+    /**
+     * Create item for a prev relationship (mainly used for pagination)
+     *
+     * @param  array $args
+     * @return stdClass
+     */
+    public function createDataPrev(array $args)
+    {
+        $rel  = 'prev';
+        $href = (string) array_shift($args);
+
+        $attributes = compact('rel', 'href');
+
+        return $this->createData($attributes);
+    }
+
+    /**
+     * Create item for a prev relationship (mainly used for pagination)
+     *
+     * @param  array $args
+     * @return stdClass
+     */
+    public function createDataNext(array $args)
+    {
+        $rel  = 'next';
+        $href = (string) array_shift($args);
+
+        $attributes = compact('rel', 'href');
+
         return $this->createData($attributes);
     }
 }

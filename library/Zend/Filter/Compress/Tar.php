@@ -1,37 +1,21 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Filter\Compress;
 
-use Archive_Tar,
-    RecursiveDirectoryIterator,
-    RecursiveIteratorIterator,
-    Zend\Filter\Exception;
+use Archive_Tar;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use Zend\Filter\Exception;
 
 /**
  * Compression adapter for Tar
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Tar extends AbstractCompressionAlgorithm
 {
@@ -54,6 +38,7 @@ class Tar extends AbstractCompressionAlgorithm
      * Class constructor
      *
      * @param array $options (Optional) Options to set
+     * @throws Exception\ExtensionNotLoadedException if Archive_Tar component not available
      */
     public function __construct($options = null)
     {
@@ -80,7 +65,7 @@ class Tar extends AbstractCompressionAlgorithm
      * Sets the archive to use for de-/compression
      *
      * @param  string $archive Archive to use
-     * @return Tar
+     * @return self
      */
     public function setArchive($archive)
     {
@@ -104,7 +89,7 @@ class Tar extends AbstractCompressionAlgorithm
      * Sets the target path to use
      *
      * @param  string $target
-     * @return Tar
+     * @return self
      * @throws Exception\InvalidArgumentException if target path does not exist
      */
     public function setTarget($target)
@@ -134,7 +119,7 @@ class Tar extends AbstractCompressionAlgorithm
      * Either Gz or Bz2.
      *
      * @param string $mode
-     * @return Tar
+     * @return self
      * @throws Exception\InvalidArgumentException for invalid $mode values
      * @throws Exception\ExtensionNotLoadedException if bz2 mode selected but extension not loaded
      * @throws Exception\ExtensionNotLoadedException if gz mode selected but extension not loaded
@@ -210,7 +195,7 @@ class Tar extends AbstractCompressionAlgorithm
      * Decompresses the given content
      *
      * @param  string $content
-     * @return boolean
+     * @return string
      * @throws Exception\RuntimeException if unable to find archive
      * @throws Exception\RuntimeException if error occurs decompressing archive
      */
@@ -225,7 +210,7 @@ class Tar extends AbstractCompressionAlgorithm
         $archive = new Archive_Tar($archive, $this->getMode());
         $target  = $this->getTarget();
         if (!is_dir($target)) {
-            $target = dirname($target);
+            $target = dirname($target) . DIRECTORY_SEPARATOR;
         }
 
         $result = $archive->extract($target);
@@ -233,7 +218,7 @@ class Tar extends AbstractCompressionAlgorithm
             throw new Exception\RuntimeException('Error while extracting the Tar archive');
         }
 
-        return true;
+        return $target;
     }
 
     /**

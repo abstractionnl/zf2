@@ -1,40 +1,19 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Mail
- * @subpackage Protocol
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Mail\Protocol\Smtp\Auth;
 
+use Zend\Crypt\Hmac;
 use Zend\Mail\Protocol\Smtp;
 
 /**
  * Performs CRAM-MD5 authentication
- *
- * @uses       \Zend\Mail\Protocol\Smtp
- * @category   Zend
- * @package    Zend_Mail
- * @subpackage Protocol
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Crammd5 extends Smtp
 {
@@ -53,13 +32,12 @@ class Crammd5 extends Smtp
     /**
      * Constructor.
      *
-     * All parameters may be passed as an array to the first argument of the 
-     * constructor. If so, 
+     * All parameters may be passed as an array to the first argument of the
+     * constructor. If so,
      *
      * @param  string|array $host   (Default: 127.0.0.1)
      * @param  null|int     $port   (Default: null)
      * @param  null|array   $config Auth-specific parameters
-     * @return void
      */
     public function __construct($host = '127.0.0.1', $port = null, $config = null)
     {
@@ -89,9 +67,7 @@ class Crammd5 extends Smtp
 
 
     /**
-     * @todo Perform CRAM-MD5 authentication with supplied credentials
-     *
-     * @return void
+     * Performs CRAM-MD5 authentication with supplied credentials
      */
     public function auth()
     {
@@ -104,13 +80,13 @@ class Crammd5 extends Smtp
         $digest = $this->_hmacMd5($this->getPassword(), $challenge);
         $this->_send(base64_encode($this->getUsername() . ' ' . $digest));
         $this->_expect(235);
-        $this->_auth = true;
+        $this->auth = true;
     }
 
     /**
      * Set value for username
      *
-     * @param  string $value
+     * @param  string $username
      * @return Crammd5
      */
     public function setUsername($username)
@@ -118,11 +94,11 @@ class Crammd5 extends Smtp
         $this->username = $username;
         return $this;
     }
-    
+
     /**
      * Get username
      *
-     * @return null|string
+     * @return string
      */
     public function getUsername()
     {
@@ -132,7 +108,7 @@ class Crammd5 extends Smtp
     /**
      * Set value for password
      *
-     * @param  string $value
+     * @param  string $password
      * @return Crammd5
      */
     public function setPassword($password)
@@ -140,11 +116,11 @@ class Crammd5 extends Smtp
         $this->password = $password;
         return $this;
     }
-    
+
     /**
      * Get password
      *
-     * @return null|string
+     * @return string
      */
     public function getPassword()
     {
@@ -156,23 +132,11 @@ class Crammd5 extends Smtp
      *
      * @param  string $key   Challenge key (usually password)
      * @param  string $data  Challenge data
-     * @param  string $block Length of blocks
+     * @param  int    $block Length of blocks (deprecated; unused)
      * @return string
      */
     protected function _hmacMd5($key, $data, $block = 64)
     {
-        if (strlen($key) > 64) {
-            $key = pack('H32', md5($key));
-        } elseif (strlen($key) < 64) {
-            $key = str_pad($key, $block, "\0");
-        }
-
-        $k_ipad = substr($key, 0, 64) ^ str_repeat(chr(0x36), 64);
-        $k_opad = substr($key, 0, 64) ^ str_repeat(chr(0x5C), 64);
-
-        $inner = pack('H32', md5($k_ipad . $data));
-        $digest = md5($k_opad . $inner);
-
-        return $digest;
+        return Hmac::compute($key, 'md5', $data);
     }
 }

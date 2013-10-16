@@ -1,36 +1,15 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator\Barcode;
 
-/**
- * @uses       \Zend\Validator\Barcode\Adapter
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
-abstract class AbstractAdapter implements Adapter
+abstract class AbstractAdapter implements AdapterInterface
 {
     /**
      * Allowed options for this adapter
@@ -47,7 +26,7 @@ abstract class AbstractAdapter implements Adapter
      * Checks the length of a barcode
      *
      * @param  string $value The barcode to check for proper length
-     * @return boolean
+     * @return bool
      */
     public function hasValidLength($value)
     {
@@ -87,7 +66,7 @@ abstract class AbstractAdapter implements Adapter
      * Checks for allowed characters within the barcode
      *
      * @param  string $value The barcode to check for allowed characters
-     * @return boolean
+     * @return bool
      */
     public function hasValidCharacters($value)
     {
@@ -118,7 +97,7 @@ abstract class AbstractAdapter implements Adapter
      * Validates the checksum
      *
      * @param  string $value The barcode to check the checksum for
-     * @return boolean
+     * @return bool
      */
     public function hasValidChecksum($value)
     {
@@ -135,7 +114,7 @@ abstract class AbstractAdapter implements Adapter
     /**
      * Returns the allowed barcode length
      *
-     * @return string
+     * @return int|array
      */
     public function getLength()
     {
@@ -145,7 +124,7 @@ abstract class AbstractAdapter implements Adapter
     /**
      * Returns the allowed characters
      *
-     * @return integer|string|array
+     * @return int|string|array
      */
     public function getCharacters()
     {
@@ -164,8 +143,8 @@ abstract class AbstractAdapter implements Adapter
     /**
      * Sets the checksum validation method
      *
-     * @param callback $checksum Checksum method to call
-     * @return \Zend\Validator\Barcode\AbstractAdapter
+     * @param callable $checksum Checksum method to call
+     * @return AbstractAdapter
      */
     protected function setChecksum($checksum)
     {
@@ -176,8 +155,8 @@ abstract class AbstractAdapter implements Adapter
     /**
      * Sets the checksum validation, if no value is given, the actual setting is returned
      *
-     * @param  boolean $check
-     * @return \Zend\Validator\Barcode\AbstractAdapter|boolean
+     * @param  bool $check
+     * @return AbstractAdapter|bool
      */
     public function useChecksum($check = null)
     {
@@ -185,15 +164,15 @@ abstract class AbstractAdapter implements Adapter
             return $this->options['useChecksum'];
         }
 
-        $this->options['useChecksum'] = (boolean) $check;
+        $this->options['useChecksum'] = (bool) $check;
         return $this;
     }
 
     /**
      * Sets the length of this barcode
      *
-     * @param integer $length
-     * @return \Zend\Validator\Barcode\AbstractAdapter
+     * @param int|array $length
+     * @return AbstractAdapter
      */
     protected function setLength($length)
     {
@@ -204,8 +183,8 @@ abstract class AbstractAdapter implements Adapter
     /**
      * Sets the allowed characters of this barcode
      *
-     * @param integer $characters
-     * @return \Zend\Validator\Barcode\AbstractAdapter
+     * @param int $characters
+     * @return AbstractAdapter
      */
     protected function setCharacters($characters)
     {
@@ -218,9 +197,9 @@ abstract class AbstractAdapter implements Adapter
      * GTIN implementation factor 3
      *
      * @param  string $value The barcode to validate
-     * @return boolean
+     * @return bool
      */
-    protected function _gtin($value)
+    protected function gtin($value)
     {
         $barcode = substr($value, 0, -1);
         $sum     = 0;
@@ -248,9 +227,9 @@ abstract class AbstractAdapter implements Adapter
      * IDENTCODE implementation factors 9 and 4
      *
      * @param  string $value The barcode to validate
-     * @return boolean
+     * @return bool
      */
-    protected function _identcode($value)
+    protected function identcode($value)
     {
         $barcode = substr($value, 0, -1);
         $sum     = 0;
@@ -278,9 +257,9 @@ abstract class AbstractAdapter implements Adapter
      * CODE25 implementation factor 3
      *
      * @param  string $value The barcode to validate
-     * @return boolean
+     * @return bool
      */
-    protected function _code25($value)
+    protected function code25($value)
     {
         $barcode = substr($value, 0, -1);
         $sum     = 0;
@@ -308,15 +287,15 @@ abstract class AbstractAdapter implements Adapter
      * POSTNET implementation
      *
      * @param  string $value The barcode to validate
-     * @return boolean
+     * @return bool
      */
-    protected function _postnet($value)
+    protected function postnet($value)
     {
         $checksum = substr($value, -1, 1);
         $values   = str_split(substr($value, 0, -1));
 
         $check = 0;
-        foreach($values as $row) {
+        foreach ($values as $row) {
             $check += $row;
         }
 

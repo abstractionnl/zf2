@@ -1,45 +1,24 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Mvc_Router
- * @subpackage Http
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Mvc\Router\Http;
 
-use Zend\Mvc\Router\Exception,
-    Traversable,
-    Zend\Stdlib\IteratorToArray,
-    Zend\Mvc\Router\SimpleRouteStack,
-    Zend\Mvc\Router\Route as BaseRoute,
-    Zend\Mvc\Router\Http\Route,
-    Zend\Stdlib\RequestDescription as Request,
-    Zend\Uri\Http as HttpUri;
+use ArrayObject;
+use Traversable;
+use Zend\Mvc\Router\Exception;
+use Zend\Mvc\Router\SimpleRouteStack;
+use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\RequestInterface as Request;
+use Zend\Uri\Http as HttpUri;
 
 /**
  * Tree search implementation.
- *
- * @package    Zend_Mvc_Router
- * @subpackage Http
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class TreeRouteStack extends SimpleRouteStack
 {
@@ -58,36 +37,79 @@ class TreeRouteStack extends SimpleRouteStack
     protected $requestUri;
 
     /**
-     * init(): defined by SimpleRouteStack.
+     * Prototype routes.
      *
-     * @see    SimpleRouteStack::init()
-     * @return void
+     * We use an ArrayObject in this case so we can easily pass it down the tree
+     * by reference.
+     *
+     * @var ArrayObject
      */
-    protected function init()
+    protected $prototypes;
+
+    /**
+     * factory(): defined by RouteInterface interface.
+     *
+     * @see    \Zend\Mvc\Router\RouteInterface::factory()
+     * @param  array|Traversable $options
+     * @return SimpleRouteStack
+     * @throws Exception\InvalidArgumentException
+     */
+    public static function factory($options = array())
     {
-        $this->routeBroker->getClassLoader()->registerPlugins(array(
-            'hostname' => __NAMESPACE__ . '\Hostname',
-            'literal'  => __NAMESPACE__ . '\Literal',
-            'part'     => __NAMESPACE__ . '\Part',
-            'regex'    => __NAMESPACE__ . '\Regex',
-            'scheme'   => __NAMESPACE__ . '\Scheme',
-            'segment'  => __NAMESPACE__ . '\Segment',
-            'wildcard' => __NAMESPACE__ . '\Wildcard',
-        ));
+        if ($options instanceof Traversable) {
+            $options = ArrayUtils::iteratorToArray($options);
+        } elseif (!is_array($options)) {
+            throw new Exception\InvalidArgumentException(__METHOD__ . ' expects an array or Traversable set of options');
+        }
+
+        $instance = parent::factory($options);
+
+        if (isset($options['prototypes'])) {
+            $instance->addPrototypes($options['prototypes']);
+        }
+
+        return $instance;
     }
 
     /**
-     * addRoute(): defined by RouteStack interface.
+     * init(): defined by SimpleRouteStack.
      *
-     * @see    RouteStack::addRoute()
+     * @see    SimpleRouteStack::init()
+     */
+    protected function init()
+    {
+        $this->prototypes = new ArrayObject;
+
+        $routes = $this->routePluginManager;
+        foreach (array(
+                'chain'    => __NAMESPACE__ . '\Chain',
+                'hostname' => __NAMESPACE__ . '\Hostname',
+                'literal'  => __NAMESPACE__ . '\Literal',
+                'method'   => __NAMESPACE__ . '\Method',
+                'part'     => __NAMESPACE__ . '\Part',
+                'query'    => __NAMESPACE__ . '\Query',
+                'regex'    => __NAMESPACE__ . '\Regex',
+                'scheme'   => __NAMESPACE__ . '\Scheme',
+                'segment'  => __NAMESPACE__ . '\Segment',
+                'wildcard' => __NAMESPACE__ . '\Wildcard',
+            ) as $name => $class
+        ) {
+            $routes->setInvokableClass($name, $class);
+        };
+    }
+
+    /**
+     * addRoute(): defined by RouteStackInterface interface.
+     *
+     * @see    RouteStackInterface::addRoute()
      * @param  string  $name
      * @param  mixed   $route
-     * @param  integer $priority
-     * @return RouteStack
+     * @param  int $priority
+     * @return TreeRouteStack
      */
     public function addRoute($name, $route, $priority = null)
     {
-        if (!$route instanceof Route) {
+        if (!$route instanceof RouteInterface) {
             $route = $this->routeFromArray($route);
         }
 
@@ -98,20 +120,46 @@ class TreeRouteStack extends SimpleRouteStack
      * routeFromArray(): defined by SimpleRouteStack.
      *
      * @see    SimpleRouteStack::routeFromArray()
-     * @param  array|Traversable $specs
-     * @return Route
+     * @param  string|array|Traversable $specs
+     * @return RouteInterface
+     * @throws Exception\InvalidArgumentException When route definition is not an array nor traversable
+     * @throws Exception\InvalidArgumentException When chain routes are not an array nor traversable
+     * @throws Exception\RuntimeException         When a generated routes does not implement the HTTP route interface
      */
     protected function routeFromArray($specs)
     {
-        if ($specs instanceof Traversable) {
-            $specs = IteratorToArray::convert($specs);
+        if (is_string($specs)) {
+            if (null === ($route = $this->getPrototype($specs))) {
+                throw new Exception\RuntimeException(sprintf('Could not find prototype with name %s', $specs));
+            }
+
+            return $route;
+        } elseif ($specs instanceof Traversable) {
+            $specs = ArrayUtils::iteratorToArray($specs);
         } elseif (!is_array($specs)) {
             throw new Exception\InvalidArgumentException('Route definition must be an array or Traversable object');
         }
-        
-        $route = parent::routeFromArray($specs);
 
-        if (!$route instanceof Route) {
+        if (isset($specs['chain_routes'])) {
+            if (!is_array($specs['chain_routes'])) {
+                throw new Exception\InvalidArgumentException('Chain routes must be an array or Traversable object');
+            }
+
+            $chainRoutes = array_merge(array($specs), $specs['chain_routes']);
+            unset($chainRoutes[0]['chain_routes']);
+
+            $options = array(
+                'routes'        => $chainRoutes,
+                'route_plugins' => $this->routePluginManager,
+                'prototypes'    => $this->prototypes,
+            );
+
+            $route = $this->routePluginManager->get('chain', $options);
+        } else {
+            $route = parent::routeFromArray($specs);
+        }
+
+        if (!$route instanceof RouteInterface) {
             throw new Exception\RuntimeException('Given route does not implement HTTP route interface');
         }
 
@@ -120,69 +168,137 @@ class TreeRouteStack extends SimpleRouteStack
                 'route'         => $route,
                 'may_terminate' => (isset($specs['may_terminate']) && $specs['may_terminate']),
                 'child_routes'  => $specs['child_routes'],
-                'route_broker'  => $this->routeBroker,
+                'route_plugins' => $this->routePluginManager,
+                'prototypes'    => $this->prototypes,
             );
 
-            $route = $this->routeBroker->load('part', $options);
+            $priority = (isset($route->priority) ? $route->priority : null);
+
+            $route = $this->routePluginManager->get('part', $options);
+            $route->priority = $priority;
         }
 
         return $route;
     }
 
     /**
-     * match(): defined by BaseRoute interface.
+     * Add multiple prototypes at once.
      *
-     * @see    BaseRoute::match()
-     * @param  Request $request
-     * @return RouteMatch
+     * @param  Traversable $routes
+     * @return TreeRouteStack
+     * @throws Exception\InvalidArgumentException
      */
-    public function match(Request $request)
+    public function addPrototypes($routes)
     {
-        if (!method_exists($request, 'uri')) {
-            return null;
+        if (!is_array($routes) && !$routes instanceof Traversable) {
+            throw new Exception\InvalidArgumentException('addPrototypes expects an array or Traversable set of routes');
         }
 
-        if ($this->baseUrl === null && method_exists($request, 'getBaseUrl')) {
-            $this->setBaseUrl($request->getBaseUrl());
-        }
-        
-        $uri           = $request->uri();
-        $baseUrlLength = strlen($this->baseUrl) ?: null;
-       
-        if ($this->requestUri === null) {
-            $this->setRequestUri($uri);
+        foreach ($routes as $name => $route) {
+            $this->addPrototype($name, $route);
         }
 
-        if ($baseUrlLength !== null) {
-            $pathLength = strlen($uri->getPath()) - $baseUrlLength;
+        return $this;
+    }
 
-            foreach ($this->routes as $name => $route) {
-                if (($match = $route->match($request, $baseUrlLength)) instanceof RouteMatch && $match->getLength() === $pathLength) {
-                    $match->setMatchedRouteName($name);
-                    
-                    foreach ($this->defaultParams as $name => $value) {
-                        if ($match->getParam($name) === null) {
-                            $match->setParam($name, $value);
-                        }
-                    }
-                    
-                    return $match;
-                }
-            }
-        } else {
-            return parent::match($request);
+    /**
+     * Add a prototype.
+     *
+     * @param  string $name
+     * @param  mixed  $route
+     * @return TreeRouteStack
+     */
+    public function addPrototype($name, $route)
+    {
+        if (!$route instanceof RouteInterface) {
+            $route = $this->routeFromArray($route);
+        }
+
+        $this->prototypes[$name] = $route;
+
+        return $this;
+    }
+
+    /**
+     * Get a prototype.
+     *
+     * @param  string $name
+     * @return RouterInterface|null
+     */
+    public function getPrototype($name)
+    {
+        if (isset($this->prototypes[$name])) {
+            return $this->prototypes[$name];
         }
 
         return null;
     }
 
     /**
-     * assemble(): defined by Route interface.
+     * match(): defined by \Zend\Mvc\Router\RouteInterface
      *
-     * @see    BaseRoute::assemble()
+     * @see    \Zend\Mvc\Router\RouteInterface::match()
+     * @param  Request      $request
+     * @param  integer|null $pathOffset
+     * @param  array        $options
+     * @return RouteMatch|null
+     */
+    public function match(Request $request, $pathOffset = null, array $options = array())
+    {
+        if (!method_exists($request, 'getUri')) {
+            return null;
+        }
+
+        if ($this->baseUrl === null && method_exists($request, 'getBaseUrl')) {
+            $this->setBaseUrl($request->getBaseUrl());
+        }
+
+        $uri           = $request->getUri();
+        $baseUrlLength = strlen($this->baseUrl) ?: null;
+
+        if ($pathOffset !== null) {
+            $baseUrlLength += $pathOffset;
+        }
+
+        if ($this->requestUri === null) {
+            $this->setRequestUri($uri);
+        }
+
+        if ($baseUrlLength !== null) {
+            $pathLength = strlen($uri->getPath()) - $baseUrlLength;
+        } else {
+            $pathLength = null;
+        }
+
+        foreach ($this->routes as $name => $route) {
+            if (
+                ($match = $route->match($request, $baseUrlLength, $options)) instanceof RouteMatch
+                && ($pathLength === null || $match->getLength() === $pathLength)
+            ) {
+                $match->setMatchedRouteName($name);
+
+                foreach ($this->defaultParams as $paramName => $value) {
+                    if ($match->getParam($paramName) === null) {
+                        $match->setParam($paramName, $value);
+                    }
+                }
+
+                return $match;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * assemble(): defined by \Zend\Mvc\Router\RouteInterface interface.
+     *
+     * @see    \Zend\Mvc\Router\RouteInterface::assemble()
      * @param  array $params
      * @param  array $options
      * @return mixed
+     * @throws Exception\InvalidArgumentException
+     * @throws Exception\RuntimeException
      */
     public function assemble(array $params = array(), array $options = array())
     {
@@ -198,46 +314,65 @@ class TreeRouteStack extends SimpleRouteStack
         }
 
         if (isset($names[1])) {
+            if (!$route instanceof TreeRouteStack) {
+                throw new Exception\RuntimeException(sprintf('Route with name "%s" does not have child routes', $names[0]));
+            }
             $options['name'] = $names[1];
         } else {
             unset($options['name']);
         }
 
-        if (!isset($options['only_return_path']) || !$options['only_return_path']) {
-            if (!isset($options['uri'])) {
-                $uri = new HttpUri();
-
-                if (isset($options['absolute']) && $options['absolute']) {
-                    if ($this->requestUri === null) {
-                        throw new Exception\RuntimeException('Request URI has not been set');
-                    }
-
-                    $uri->setScheme($this->requestUri->getScheme())
-                        ->setHost($this->requestUri->getHost())
-                        ->setPort($this->requestUri->getPort());
-                }
-
-                $options['uri'] = $uri;
-            } else {
-                $uri = $options['uri'];
-            }
-
-            $path = $this->baseUrl . $route->assemble(array_merge($this->defaultParams, $params), $options);
-
-            if ((isset($options['absolute']) && $options['absolute']) || $uri->getHost() !== null) {
-                if ($uri->getScheme() === null) {
-                    if ($this->requestUri === null) {
-                        throw new Exception\RuntimeException('Request URI has not been set');
-                    }
-
-                    $uri->setScheme($this->requestUri->getScheme());
-                }
-
-                return $uri->setPath($path)->toString();
-            }
+        if (isset($options['only_return_path']) && $options['only_return_path']) {
+            return $this->baseUrl . $route->assemble(array_merge($this->defaultParams, $params), $options);
         }
-        
-        return $this->baseUrl . $route->assemble(array_merge($this->defaultParams, $params), $options);
+
+        if (!isset($options['uri'])) {
+            $uri = new HttpUri();
+
+            if (isset($options['force_canonical']) && $options['force_canonical']) {
+                if ($this->requestUri === null) {
+                    throw new Exception\RuntimeException('Request URI has not been set');
+                }
+
+                $uri->setScheme($this->requestUri->getScheme())
+                    ->setHost($this->requestUri->getHost())
+                    ->setPort($this->requestUri->getPort());
+            }
+
+            $options['uri'] = $uri;
+        } else {
+            $uri = $options['uri'];
+        }
+
+        $path = $this->baseUrl . $route->assemble(array_merge($this->defaultParams, $params), $options);
+
+        if (isset($options['query'])) {
+            $uri->setQuery($options['query']);
+        }
+
+        if (isset($options['fragment'])) {
+            $uri->setFragment($options['fragment']);
+        }
+
+        if ((isset($options['force_canonical']) && $options['force_canonical']) || $uri->getHost() !== null || $uri->getScheme() !== null) {
+            if (($uri->getHost() === null || $uri->getScheme() === null) && $this->requestUri === null) {
+                throw new Exception\RuntimeException('Request URI has not been set');
+            }
+
+            if ($uri->getHost() === null) {
+                $uri->setHost($this->requestUri->getHost());
+            }
+
+            if ($uri->getScheme() === null) {
+                $uri->setScheme($this->requestUri->getScheme());
+            }
+
+            return $uri->setPath($path)->normalize()->toString();
+        } elseif (!$uri->isAbsolute() && $uri->isValidRelative()) {
+            return $uri->setPath($path)->normalize()->toString();
+        }
+
+        return $path;
     }
 
     /**
@@ -266,7 +401,7 @@ class TreeRouteStack extends SimpleRouteStack
      * Set the request URI.
      *
      * @param  HttpUri $uri
-     * @return self
+     * @return TreeRouteStack
      */
     public function setRequestUri(HttpUri $uri)
     {

@@ -1,21 +1,10 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Filter\Compress;
@@ -24,11 +13,6 @@ use Zend\Filter\Exception;
 
 /**
  * Compression adapter for Bz2
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Bz2 extends AbstractCompressionAlgorithm
 {
@@ -50,6 +34,7 @@ class Bz2 extends AbstractCompressionAlgorithm
      * Class constructor
      *
      * @param null|array|\Traversable $options (Optional) Options to set
+     * @throws Exception\ExtensionNotLoadedException if bz2 extension not loaded
      */
     public function __construct($options = null)
     {
@@ -62,7 +47,7 @@ class Bz2 extends AbstractCompressionAlgorithm
     /**
      * Returns the set blocksize
      *
-     * @return integer
+     * @return int
      */
     public function getBlocksize()
     {
@@ -72,8 +57,9 @@ class Bz2 extends AbstractCompressionAlgorithm
     /**
      * Sets a new blocksize
      *
-     * @param  integer $level
-     * @return Bz2
+     * @param  int $blocksize
+     * @throws Exception\InvalidArgumentException
+     * @return self
      */
     public function setBlocksize($blocksize)
     {
@@ -99,7 +85,7 @@ class Bz2 extends AbstractCompressionAlgorithm
      * Sets the archive to use for de-/compression
      *
      * @param  string $archive Archive to use
-     * @return Bz2
+     * @return self
      */
     public function setArchive($archive)
     {
@@ -112,6 +98,7 @@ class Bz2 extends AbstractCompressionAlgorithm
      *
      * @param  string $content
      * @return string
+     * @throws Exception\RuntimeException
      */
     public function compress($content)
     {
@@ -141,6 +128,7 @@ class Bz2 extends AbstractCompressionAlgorithm
      *
      * @param  string $content
      * @return string
+     * @throws Exception\RuntimeException
      */
     public function decompress($content)
     {

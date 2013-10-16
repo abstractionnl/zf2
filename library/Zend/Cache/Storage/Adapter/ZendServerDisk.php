@@ -1,45 +1,40 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Cache
- * @subpackage Storage
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Cache\Storage\Adapter;
 
-use Zend\Cache\Utils,
-    Zend\Cache\Exception;
+use Zend\Cache\Exception;
+use Zend\Cache\Storage\AvailableSpaceCapableInterface;
+use Zend\Cache\Storage\ClearByNamespaceInterface;
+use Zend\Cache\Storage\FlushableInterface;
+use Zend\Cache\Storage\TotalSpaceCapableInterface;
+use Zend\Stdlib\ErrorHandler;
 
-/**
- * @category   Zend
- * @package    Zend_Cache
- * @subpackage Storage
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
-class ZendServerDisk extends AbstractZendServer
+class ZendServerDisk extends AbstractZendServer implements
+    AvailableSpaceCapableInterface,
+    ClearByNamespaceInterface,
+    FlushableInterface,
+    TotalSpaceCapableInterface
 {
+
+    /**
+     * Buffered total space in bytes
+     *
+     * @var null|int|float
+     */
+    protected $totalSpace;
 
     /**
      * Constructor
      *
-     * @param  null|array|Traversable|AdapterOptions $options
-     * @throws Exception
-     * @return void
+     * @param  null|array|\Traversable|AdapterOptions $options
+     * @throws Exception\ExtensionNotLoadedException
      */
     public function __construct($options = array())
     {
@@ -52,34 +47,84 @@ class ZendServerDisk extends AbstractZendServer
         parent::__construct($options);
     }
 
-    /**
-     * Get storage capacity.
-     *
-     * @param  array $options
-     * @return array|boolean Capacity as array or false on failure
-     *
-     * @triggers getCapacity.pre(PreEvent)
-     * @triggers getCapacity.post(PostEvent)
-     * @triggers getCapacity.exception(ExceptionEvent)
-     */
-    public function getCapacity(array $options = array())
-    {
-        $args = new ArrayObject(array(
-            'options' => & $options,
-        ));
+    /* FlushableInterface */
 
-        try {
-            $eventRs = $this->triggerPre(__FUNCTION__, $args);
-            if ($eventRs->stopped()) {
-                return $eventRs->last();
+    /**
+     * Flush the whole storage
+     *
+     * @return bool
+     */
+    public function flush()
+    {
+        return zend_disk_cache_clear();
+    }
+
+    /* ClearByNamespaceInterface */
+
+    /**
+     * Remove items of given namespace
+     *
+     * @param string $namespace
+     * @return bool
+     */
+    public function clearByNamespace($namespace)
+    {
+        $namespace = (string) $namespace;
+        if ($namespace === '') {
+            throw new Exception\InvalidArgumentException('No namespace given');
+        }
+
+        return zend_disk_cache_clear($namespace);
+    }
+
+    /* TotalSpaceCapableInterface */
+
+    /**
+     * Get total space in bytes
+     *
+     * @throws Exception\RuntimeException
+     * @return int|float
+     */
+    public function getTotalSpace()
+    {
+        if ($this->totalSpace === null) {
+            $path = ini_get('zend_datacache.disk.save_path');
+
+            ErrorHandler::start();
+            $total = disk_total_space($path);
+            $error = ErrorHandler::stop();
+            if ($total === false) {
+                throw new Exception\RuntimeException("Can't detect total space of '{$path}'", 0, $error);
             }
 
-            $result = Utils::getDiskCapacity(ini_get('zend_datacache.disk.save_path'));
-            return $this->triggerPost(__FUNCTION__, $args, $result);
-        } catch (\Exception $e) {
-            return $this->triggerException(__FUNCTION__, $args, $e);
+            $this->totalSpace = $total;
         }
+        return $this->totalSpace;
     }
+
+    /* AvailableSpaceCapableInterface */
+
+    /**
+     * Get available space in bytes
+     *
+     * @throws Exception\RuntimeException
+     * @return int|float
+     */
+    public function getAvailableSpace()
+    {
+        $path = ini_get('zend_datacache.disk.save_path');
+
+        ErrorHandler::start();
+        $avail = disk_free_space($path);
+        $error = ErrorHandler::stop();
+        if ($avail === false) {
+            throw new Exception\RuntimeException("Can't detect free space of '{$path}'", 0, $error);
+        }
+
+        return $avail;
+    }
+
+    /* internal  */
 
     /**
      * Store data into Zend Data Disk Cache
@@ -90,12 +135,12 @@ class ZendServerDisk extends AbstractZendServer
      * @return void
      * @throws Exception\RuntimeException
      */
-    protected function zdcStore($key, $value, $ttl)
+    protected function zdcStore($internalKey, $value, $ttl)
     {
-        if (!zend_disk_cache_store($key, $value, $ttl)) {
+        if (!zend_disk_cache_store($internalKey, $value, $ttl)) {
             $valueType = gettype($value);
             throw new Exception\RuntimeException(
-                "zend_disk_cache_store($internalKey, <{$valueType}>, {$options['ttl']}) failed"
+                "zend_disk_cache_store($internalKey, <{$valueType}>, {$ttl}) failed"
             );
         }
     }
@@ -107,9 +152,9 @@ class ZendServerDisk extends AbstractZendServer
      * @return mixed The stored value or FALSE if item wasn't found
      * @throws Exception\RuntimeException
      */
-    protected function zdcFetch($key)
+    protected function zdcFetch($internalKey)
     {
-        return zend_disk_cache_fetch((string)$key);
+        return zend_disk_cache_fetch((string) $internalKey);
     }
 
     /**
@@ -132,42 +177,11 @@ class ZendServerDisk extends AbstractZendServer
      * Delete data from Zend Data Disk Cache
      *
      * @param  string $internalKey
-     * @return boolean
+     * @return bool
      * @throws Exception\RuntimeException
      */
-    protected function zdcDelete($key)
+    protected function zdcDelete($internalKey)
     {
-        return zend_disk_cache_delete($key);
-    }
-
-    /**
-     * Clear items of all namespaces from Zend Data Disk Cache
-     *
-     * @return void
-     * @throws Exception\RuntimeException
-     */
-    protected function zdcClear()
-    {
-        if (!zend_disk_cache_clear()) {
-            throw new Exception\RuntimeException(
-                'zend_disk_cache_clear() failed'
-            );
-        }
-    }
-
-    /**
-     * Clear items of the given namespace from Zend Data Disk Cache
-     *
-     * @param  string $namespace
-     * @return void
-     * @throws Exception\RuntimeException
-     */
-    protected function zdcClearByNamespace($namespace)
-    {
-        if (!zend_disk_cache_clear($namespace)) {
-            throw new Exception\RuntimeException(
-                "zend_disk_cache_clear({$namespace}) failed"
-            );
-        }
+        return zend_disk_cache_delete($internalKey);
     }
 }

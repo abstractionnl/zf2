@@ -1,36 +1,16 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Object
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Barcode\Object;
 
 /**
  * Class for generate Ean5 barcode
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Ean5 extends Ean13
 {
@@ -59,7 +39,7 @@ class Ean5 extends Ean13
 
     /**
      * Width of the barcode (in pixels)
-     * @return integer
+     * @return int
      */
     protected function calculateBarcodeWidth()
     {
@@ -79,11 +59,11 @@ class Ean5 extends Ean13
         $barcodeTable = array();
 
         // Start character (01011)
-        $barcodeTable[] = array(0 , $this->barThinWidth , 0 , 1);
-        $barcodeTable[] = array(1 , $this->barThinWidth , 0 , 1);
-        $barcodeTable[] = array(0 , $this->barThinWidth , 0 , 1);
-        $barcodeTable[] = array(1 , $this->barThinWidth , 0 , 1);
-        $barcodeTable[] = array(1 , $this->barThinWidth , 0 , 1);
+        $barcodeTable[] = array(0, $this->barThinWidth, 0, 1);
+        $barcodeTable[] = array(1, $this->barThinWidth, 0, 1);
+        $barcodeTable[] = array(0, $this->barThinWidth, 0, 1);
+        $barcodeTable[] = array(1, $this->barThinWidth, 0, 1);
+        $barcodeTable[] = array(1, $this->barThinWidth, 0, 1);
 
         $firstCharacter = true;
         $textTable = str_split($this->getText());
@@ -94,12 +74,12 @@ class Ean5 extends Ean13
                 $firstCharacter = false;
             } else {
                 // Intermediate character (01)
-                $barcodeTable[] = array(0 , $this->barThinWidth , 0 , 1);
-                $barcodeTable[] = array(1 , $this->barThinWidth , 0 , 1);
+                $barcodeTable[] = array(0, $this->barThinWidth, 0, 1);
+                $barcodeTable[] = array(1, $this->barThinWidth, 0, 1);
             }
             $bars = str_split($this->codingMap[$this->getParity($i)][$textTable[$i]]);
             foreach ($bars as $b) {
-                $barcodeTable[] = array($b , $this->barThinWidth , 0 , 1);
+                $barcodeTable[] = array($b, $this->barThinWidth, 0, 1);
             }
         }
 
@@ -117,7 +97,7 @@ class Ean5 extends Ean13
         $this->checkText($text);
         $checksum = 0;
 
-        for ($i = 0 ; $i < $this->barcodeLength; $i ++) {
+        for ($i = 0; $i < $this->barcodeLength; $i ++) {
             $checksum += intval($text{$i}) * ($i % 2 ? 9 : 3);
         }
 

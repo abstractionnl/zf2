@@ -1,63 +1,45 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Memory
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Memory;
+
+use ArrayAccess;
+use Countable;
 
 /**
  * String value object
  *
  * It's an OO string wrapper.
  * Used to intercept string updates.
- *
- * @uses       ArrayAccess
- * @uses       Countable
- * @category   Zend
- * @package    Zend_Memory
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-class Value implements \ArrayAccess,\Countable
+class Value implements ArrayAccess, Countable
 {
     /**
      * Value
      *
      * @var string
      */
-    private $_value;
+    private $value;
 
     /**
      * Container
      *
-     * @var \Zend\Memory\Container
+     * @var Container\Movable
      */
-    private $_container;
+    private $container;
 
     /**
      * Boolean flag which signals to trace value modifications
      *
-     * @var boolean
+     * @var bool
      */
-    private $_trace;
+    private $trace;
 
 
     /**
@@ -68,9 +50,9 @@ class Value implements \ArrayAccess,\Countable
      */
     public function __construct($value, Container\Movable $container)
     {
-        $this->_container = $container;
+        $this->container = $container;
 
-        $this->_value = (string)$value;
+        $this->value = (string) $value;
 
         /**
          * Object is marked as just modified by memory manager
@@ -78,59 +60,59 @@ class Value implements \ArrayAccess,\Countable
          * object is processed (and marked as traced) when another
          * memory object is modified.
          *
-         * It reduces overall numberr of calls necessary to modification trace
+         * It reduces overall number of calls necessary to modification trace
          */
-        $this->_trace = false;
+        $this->trace = false;
     }
 
     /**
      * Countable
-     * 
+     *
      * @return int
      */
     public function count()
     {
-        return strlen($this->_value);
+        return strlen($this->value);
     }
 
     /**
      * ArrayAccess interface method
      * returns true if string offset exists
      *
-     * @param integer $offset
-     * @return boolean
+     * @param int $offset
+     * @return bool
      */
     public function offsetExists($offset)
     {
-        return $offset >= 0  &&  $offset < strlen($this->_value);
+        return $offset >= 0 && $offset < strlen($this->value);
     }
 
     /**
      * ArrayAccess interface method
      * Get character at $offset position
      *
-     * @param integer $offset
+     * @param int $offset
      * @return string
      */
     public function offsetGet($offset)
     {
-        return $this->_value[$offset];
+        return $this->value[$offset];
     }
 
     /**
      * ArrayAccess interface method
      * Set character at $offset position
      *
-     * @param integer $offset
+     * @param int $offset
      * @param string $char
      */
     public function offsetSet($offset, $char)
     {
-        $this->_value[$offset] = $char;
+        $this->value[$offset] = $char;
 
-        if ($this->_trace) {
-            $this->_trace = false;
-            $this->_container->processUpdate();
+        if ($this->trace) {
+            $this->trace = false;
+            $this->container->processUpdate();
         }
     }
 
@@ -138,15 +120,15 @@ class Value implements \ArrayAccess,\Countable
      * ArrayAccess interface method
      * Unset character at $offset position
      *
-     * @param integer $offset
+     * @param int $offset
      */
     public function offsetUnset($offset)
     {
-        unset($this->_value[$offset]);
+        unset($this->value[$offset]);
 
-        if ($this->_trace) {
-            $this->_trace = false;
-            $this->_container->processUpdate();
+        if ($this->trace) {
+            $this->trace = false;
+            $this->container->processUpdate();
         }
     }
 
@@ -158,7 +140,7 @@ class Value implements \ArrayAccess,\Countable
      */
     public function __toString()
     {
-        return $this->_value;
+        return $this->value;
     }
 
 
@@ -173,7 +155,7 @@ class Value implements \ArrayAccess,\Countable
      */
     public function &getRef()
     {
-        return $this->_value;
+        return $this->value;
     }
 
     /**
@@ -186,6 +168,6 @@ class Value implements \ArrayAccess,\Countable
      */
     public function startTrace()
     {
-        $this->_trace = true;
+        $this->trace = true;
     }
 }

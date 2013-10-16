@@ -1,15 +1,20 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ */
 
 namespace Zend\Uri\Exception;
 
-class InvalidUriPartException 
-    extends \InvalidArgumentException
-    implements \Zend\Uri\Exception
+class InvalidUriPartException extends InvalidArgumentException
 {
     /**
      * Part-specific error codes
-     * 
-     * @var integer
+     *
+     * @var int
      */
     const INVALID_SCHEME    = 1;
     const INVALID_USER      = 2;
@@ -20,5 +25,5 @@ class InvalidUriPartException
     const INVALID_AUTHORITY = 30;
     const INVALID_PATH      = 32;
     const INVALID_QUERY     = 64;
-    const INVALID_FRAGMENT  = 128;  
+    const INVALID_FRAGMENT  = 128;
 }

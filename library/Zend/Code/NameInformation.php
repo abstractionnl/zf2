@@ -1,30 +1,30 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Code
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Code;
 
 class NameInformation
 {
+    /**
+     * @var string
+     */
     protected $namespace = null;
+
+    /**
+     * @var array
+     */
     protected $uses = array();
 
+    /**
+     * @param  string $namespace
+     * @param  array $uses
+     */
     public function __construct($namespace = null, array $uses = array())
     {
         if ($namespace) {
@@ -35,29 +35,48 @@ class NameInformation
         }
     }
 
+    /**
+     * @param  string $namespace
+     * @return NameInformation
+     */
     public function setNamespace($namespace)
     {
-        $this->namespace = $namespace;
+        $this->namespace = (string) $namespace;
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getNamespace()
     {
         return $this->namespace;
     }
 
+    /**
+     * @return bool
+     */
     public function hasNamespace()
     {
         return ($this->namespace != null);
     }
 
+    /**
+     * @param  array $uses
+     * @return NameInformation
+     */
     public function setUses(array $uses)
     {
         $this->uses = array();
         $this->addUses($uses);
+
         return $this;
     }
 
+    /**
+     * @param  array $uses
+     * @return NameInformation
+     */
     public function addUses(array $uses)
     {
         foreach ($uses as $use => $as) {
@@ -68,9 +87,14 @@ class NameInformation
             }
 
         }
+
         return $this;
     }
 
+    /**
+     * @param  array|string $use
+     * @param  string $as
+     */
     public function addUse($use, $as = null)
     {
         if (is_array($use) && array_key_exists('use', $use) && array_key_exists('as', $use)) {
@@ -78,22 +102,31 @@ class NameInformation
             $use  = $uses['use'];
             $as   = $uses['as'];
         }
+
         $use = trim($use, '\\');
         if ($as === null) {
-            $as = trim($use, '\\');
+            $as                  = trim($use, '\\');
             $nsSeparatorPosition = strrpos($as, '\\');
             if ($nsSeparatorPosition !== false && $nsSeparatorPosition !== 0 && $nsSeparatorPosition != strlen($as)) {
                 $as = substr($as, $nsSeparatorPosition + 1);
             }
         }
+
         $this->uses[$use] = $as;
     }
 
+    /**
+     * @return array
+     */
     public function getUses()
     {
         return $this->uses;
     }
 
+    /**
+     * @param  string $name
+     * @return string
+     */
     public function resolveName($name)
     {
         if ($this->namespace && !$this->uses && strlen($name) > 0 && $name{0} != '\\') {
@@ -106,7 +139,7 @@ class NameInformation
 
         if ($this->namespace || $this->uses) {
             $firstPart = $name;
-            if (($firstPartEnd = strpos($firstPart, '\\')) !== false)  {
+            if (($firstPartEnd = strpos($firstPart, '\\')) !== false) {
                 $firstPart = substr($firstPart, 0, $firstPartEnd);
             } else {
                 $firstPartEnd = strlen($firstPart);
@@ -118,7 +151,7 @@ class NameInformation
                 return $this->namespace . '\\' . $name;
             }
         }
+
         return $name;
     }
-
 }

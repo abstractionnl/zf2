@@ -1,21 +1,10 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Filter\Compress;
@@ -24,11 +13,6 @@ use Zend\Filter\Exception;
 
 /**
  * Compression adapter for Rar
- *
- * @category   Zend
- * @package    Zend_Filter
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Rar extends AbstractCompressionAlgorithm
 {
@@ -54,6 +38,7 @@ class Rar extends AbstractCompressionAlgorithm
      * Class constructor
      *
      * @param array $options (Optional) Options to set
+     * @throws Exception\ExtensionNotLoadedException if rar extension not loaded
      */
     public function __construct($options = null)
     {
@@ -77,7 +62,7 @@ class Rar extends AbstractCompressionAlgorithm
      * Sets the callback to use
      *
      * @param  string $callback
-     * @return Rar
+     * @return self
      * @throws Exception\InvalidArgumentException if invalid callback provided
      */
     public function setCallback($callback)
@@ -104,7 +89,7 @@ class Rar extends AbstractCompressionAlgorithm
      * Sets the archive to use for de-/compression
      *
      * @param  string $archive Archive to use
-     * @return Rar
+     * @return self
      */
     public function setArchive($archive)
     {
@@ -128,7 +113,7 @@ class Rar extends AbstractCompressionAlgorithm
      * Sets the password to use
      *
      * @param  string $password
-     * @return Rar
+     * @return self
      */
     public function setPassword($password)
     {
@@ -150,7 +135,7 @@ class Rar extends AbstractCompressionAlgorithm
      * Sets the targetpath to use
      *
      * @param  string $target
-     * @return Rar
+     * @return self
      * @throws Exception\InvalidArgumentException if specified target directory does not exist
      */
     public function setTarget($target)
@@ -193,14 +178,12 @@ class Rar extends AbstractCompressionAlgorithm
      * Decompresses the given content
      *
      * @param  string $content
-     * @return boolean
-     * @throws Exception\RuntimeException if archive not found, cannot be opened, 
+     * @return bool
+     * @throws Exception\RuntimeException if archive not found, cannot be opened,
      *                                    or error during decompression
      */
     public function decompress($content)
     {
-        $archive = $this->getArchive();
-
         if (!file_exists($content)) {
             throw new Exception\RuntimeException('RAR Archive not found');
         }
@@ -227,7 +210,7 @@ class Rar extends AbstractCompressionAlgorithm
             throw new Exception\RuntimeException("Error reading the RAR Archive");
         }
 
-        foreach($filelist as $file) {
+        foreach ($filelist as $file) {
             $file->extract($target);
         }
 

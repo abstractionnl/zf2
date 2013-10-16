@@ -1,36 +1,19 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category  Zend
- * @package   Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace Zend\Validator\File;
 
-use Traversable,
-    Zend\Stdlib\IteratorToArray;
+use Traversable;
+use Zend\Stdlib\ArrayUtils;
 
 /**
  * Validator which checks if the file already exists in the directory
- *
- * @uses      \Zend\Validator\File\MimeType
- * @category  Zend
- * @package   Zend_Validate
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
 class IsImage extends MimeType
 {
@@ -44,17 +27,16 @@ class IsImage extends MimeType
     /**
      * @var array Error message templates
      */
-    protected $_messageTemplates = array(
-        self::FALSE_TYPE   => "File '%value%' is no image, '%type%' detected",
-        self::NOT_DETECTED => "The mimetype of file '%value%' could not be detected",
-        self::NOT_READABLE => "File '%value%' is not readable or does not exist",
+    protected $messageTemplates = array(
+        self::FALSE_TYPE   => "File is no image, '%type%' detected",
+        self::NOT_DETECTED => "The mimetype could not be detected from the file",
+        self::NOT_READABLE => "File is not readable or does not exist",
     );
 
     /**
      * Sets validator options
      *
-     * @param  string|array|Traversable $mimetype
-     * @return void
+     * @param array|Traversable|string $options
      */
     public function __construct($options = array())
     {
@@ -119,51 +101,17 @@ class IsImage extends MimeType
         );
 
         if ($options instanceof Traversable) {
-            $options = IteratorToArray::convert($options);
+            $options = ArrayUtils::iteratorToArray($options);
         }
 
-        if (empty($options)) {
-            $options = array('mimeType' => $default);
+        if ($options === null) {
+            $options = array();
         }
 
         parent::__construct($options);
-    }
 
-    /**
-     * Throws an error of the given type
-     * Duplicates parent method due to OOP Problem with late static binding in PHP 5.2
-     *
-     * @param  string $file
-     * @param  string $errorType
-     * @return false
-     */
-    protected function createError($file, $errorType)
-    {
-        if ($file !== null) {
-            if (is_array($file)) {
-                if(array_key_exists('name', $file)) {
-                    $file = $file['name'];
-                }
-            } 
-
-            if (is_string($file)) {
-                $this->value = basename($file);
-            }
+        if (!$this->getMimeType()) {
+            $this->setMimeType($default);
         }
-
-        switch($errorType) {
-            case MimeType::FALSE_TYPE :
-                $errorType = self::FALSE_TYPE;
-                break;
-            case MimeType::NOT_DETECTED :
-                $errorType = self::NOT_DETECTED;
-                break;
-            case MimeType::NOT_READABLE :
-                $errorType = self::NOT_READABLE;
-                break;
-        }
-
-        $this->error($errorType);
-        return false;
     }
 }

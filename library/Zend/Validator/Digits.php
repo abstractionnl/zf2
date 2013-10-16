@@ -1,36 +1,16 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator;
 
-/**
- * @uses       \Zend\Filter\Digits
- * @uses       \Zend\Validator\AbstractValidator
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
+use Zend\Filter\Digits as DigitsFilter;
+
 class Digits extends AbstractValidator
 {
     const NOT_DIGITS   = 'notDigits';
@@ -42,16 +22,16 @@ class Digits extends AbstractValidator
      *
      * @var \Zend\Filter\Digits
      */
-    protected static $_filter = null;
+    protected static $filter = null;
 
     /**
      * Validation failure message template definitions
      *
      * @var array
      */
-    protected $_messageTemplates = array(
-        self::NOT_DIGITS   => "'%value%' must contain only digits",
-        self::STRING_EMPTY => "'%value%' is an empty string",
+    protected $messageTemplates = array(
+        self::NOT_DIGITS   => "The input must contain only digits",
+        self::STRING_EMPTY => "The input is an empty string",
         self::INVALID      => "Invalid type given. String, integer or float expected",
     );
 
@@ -59,7 +39,7 @@ class Digits extends AbstractValidator
      * Returns true if and only if $value only contains digit characters
      *
      * @param  string $value
-     * @return boolean
+     * @return bool
      */
     public function isValid($value)
     {
@@ -75,11 +55,11 @@ class Digits extends AbstractValidator
             return false;
         }
 
-        if (null === self::$_filter) {
-            self::$_filter = new \Zend\Filter\Digits();
+        if (null === static::$filter) {
+            static::$filter = new DigitsFilter();
         }
 
-        if ($this->getValue() !== self::$_filter->filter($this->getValue())) {
+        if ($this->getValue() !== static::$filter->filter($this->getValue())) {
             $this->error(self::NOT_DIGITS);
             return false;
         }

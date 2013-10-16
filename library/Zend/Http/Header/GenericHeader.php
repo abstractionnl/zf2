@@ -1,8 +1,19 @@
 <?php
+/**
+ * Zend Framework (http://framework.zend.com/)
+ *
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
+ */
 
 namespace Zend\Http\Header;
 
-class GenericHeader implements HeaderDescription
+/**
+ * Content-Location Header
+ *
+  */
+class GenericHeader implements HeaderInterface
 {
     /**
      * @var string
@@ -30,7 +41,7 @@ class GenericHeader implements HeaderDescription
 
     /**
      * Constructor
-     * 
+     *
      * @param null|string $fieldName
      * @param null|string $fieldValue
      */
@@ -40,16 +51,17 @@ class GenericHeader implements HeaderDescription
             $this->setFieldName($fieldName);
         }
 
-        if ($fieldValue) {
+        if ($fieldValue !== null) {
             $this->setFieldValue($fieldValue);
         }
     }
 
     /**
      * Set header field name
-     * 
+     *
      * @param  string $fieldName
      * @return GenericHeader
+     * @throws Exception\InvalidArgumentException(
      */
     public function setFieldName($fieldName)
     {
@@ -62,7 +74,9 @@ class GenericHeader implements HeaderDescription
 
         // Validate what we have
         if (!preg_match('/^[a-z][a-z0-9-]*$/i', $fieldName)) {
-            throw new Exception\InvalidArgumentException('Header name must start with a letter, and consist of only letters, numbers, and dashes');
+            throw new Exception\InvalidArgumentException(
+                'Header name must start with a letter, and consist of only letters, numbers, and dashes'
+            );
         }
 
         $this->fieldName = $fieldName;
@@ -81,7 +95,7 @@ class GenericHeader implements HeaderDescription
 
     /**
      * Set header field value
-     * 
+     *
      * @param  string $fieldValue
      * @return GenericHeader
      */
@@ -89,7 +103,7 @@ class GenericHeader implements HeaderDescription
     {
         $fieldValue = (string) $fieldValue;
 
-        if (empty($fieldValue) || preg_match('/^\s+$/', $fieldValue)) {
+        if (preg_match('/^\s+$/', $fieldValue)) {
             $fieldValue = '';
         }
 
@@ -99,7 +113,7 @@ class GenericHeader implements HeaderDescription
 
     /**
      * Retrieve header field value
-     * 
+     *
      * @return string
      */
     public function getFieldValue()
@@ -116,10 +130,6 @@ class GenericHeader implements HeaderDescription
      */
     public function toString()
     {
-        $name  = $this->getFieldName();
-        $value = $this->getFieldValue();
-
-        return $name. ': ' . $value . "\r\n";
+        return $this->getFieldName() . ': ' . $this->getFieldValue();
     }
-
 }

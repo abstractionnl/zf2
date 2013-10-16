@@ -1,39 +1,20 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Renderer
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Barcode\Renderer;
 
-use DOMDocument,
-    DOMText;
+use DOMDocument;
+use DOMElement;
+use DOMText;
 
 /**
  * Class for rendering the barcode as svg
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Svg extends AbstractRenderer
 {
@@ -52,21 +33,21 @@ class Svg extends AbstractRenderer
 
     /**
      * Height of the rendered image wanted by user
-     * @var integer
+     * @var int
      */
     protected $userHeight = 0;
 
     /**
      * Width of the rendered image wanted by user
-     * @var integer
+     * @var int
      */
     protected $userWidth = 0;
 
     /**
      * Set height of the result image
-     * @param null|integer $value
+     * @param null|int $value
+     * @throws Exception\OutOfRangeException
      * @return Svg
-     * @throw  Exception
      */
     public function setHeight($value)
     {
@@ -93,7 +74,8 @@ class Svg extends AbstractRenderer
      * Set barcode width
      *
      * @param mixed $value
-     * @return void
+     * @throws Exception\OutOfRangeException
+     * @return self
      */
     public function setWidth($value)
     {
@@ -119,17 +101,11 @@ class Svg extends AbstractRenderer
     /**
      * Set an image resource to draw the barcode inside
      *
-     * @param DOMDocument $value
+     * @param  DOMDocument $svg
      * @return Svg
-     * @throw  Exception
      */
-    public function setResource($svg)
+    public function setResource(DOMDocument $svg)
     {
-        if (!$svg instanceof DOMDocument) {
-            throw new Exception\InvalidArgumentException(
-                'Invalid DOMDocument resource provided to setResource()'
-            );
-        }
         $this->resource = $svg;
         return $this;
     }
@@ -215,7 +191,7 @@ class Svg extends AbstractRenderer
     protected function createElement($tagName, $attributes = array(), $textContent = null)
     {
         $element = $this->resource->createElement($tagName);
-        foreach ($attributes as $k =>$v) {
+        foreach ($attributes as $k => $v) {
             $element->setAttribute($k, $v);
         }
         if ($textContent !== null) {
@@ -237,6 +213,7 @@ class Svg extends AbstractRenderer
     /**
      * Check barcode dimensions
      *
+     * @throws Exception\RuntimeException
      * @return void
      */
     protected function checkDimensions()
@@ -310,8 +287,8 @@ class Svg extends AbstractRenderer
      * Draw a polygon in the svg resource
      *
      * @param array $points
-     * @param integer $color
-     * @param boolean $filled
+     * @param int $color
+     * @param  bool $filled
      */
     protected function drawPolygon($points, $color, $filled = true)
     {
@@ -342,7 +319,7 @@ class Svg extends AbstractRenderer
      * @param float $size
      * @param array $position
      * @param string $font
-     * @param integer $color
+     * @param int $color
      * @param string $alignment
      * @param float $orientation
      */

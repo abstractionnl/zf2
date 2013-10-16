@@ -1,92 +1,37 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Form
- * @subpackage Element
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright  Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Form\Element;
 
-use Zend\Validator\AbstractValidator;
+use Zend\Form\Element;
+use Zend\Form\ElementPrepareAwareInterface;
+use Zend\Form\FormInterface;
 
-/**
- * Password form element
- *
- * @uses       \Zend\Form\Element\Xhtml
- * @category   Zend
- * @package    Zend_Form
- * @subpackage Element
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
-class Password extends Xhtml
+class Password extends Element implements ElementPrepareAwareInterface
 {
     /**
-     * Use formPassword view helper by default
-     * @var string
-     */
-    public $helper = 'formPassword';
-
-    /**
-     * Whether or not to render the password
-     * @var bool
-     */
-    public $renderPassword = false;
-
-    /**
-     * Set flag indicating whether or not to render the password
-     * @param  bool $flag
-     * @return \Zend\Form\Element\Password
-     */
-    public function setRenderPassword($flag)
-    {
-        $this->renderPassword = (bool) $flag;
-        return $this;
-    }
-
-    /**
-     * Get value of renderPassword flag
+     * Seed attributes
      *
-     * @return bool
+     * @var array
      */
-    public function renderPassword()
-    {
-        return $this->renderPassword;
-    }
+    protected $attributes = array(
+        'type' => 'password',
+    );
 
     /**
-     * Override isValid()
+     * Remove the password before rendering if the form fails in order to avoid any security issue
      *
-     * Ensure that validation error messages mask password value.
-     *
-     * @param  string $value
-     * @param  mixed $context
-     * @return bool
+     * @param  FormInterface $form
+     * @return mixed
      */
-    public function isValid($value, $context = null)
+    public function prepareElement(FormInterface $form)
     {
-        foreach ($this->getValidators() as $validator) {
-            if ($validator instanceof AbstractValidator) {
-                $validator->setValueObscured(true);
-            }
-        }
-        return parent::isValid($value, $context);
+        $this->setValue('');
     }
 }

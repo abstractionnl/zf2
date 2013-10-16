@@ -1,45 +1,24 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Renderer
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Barcode\Renderer;
 
-use Traversable,
-    Zend\Barcode\Barcode,
-    Zend\Barcode\Exception as BarcodeException,
-    Zend\Barcode\Object,
-    Zend\Barcode\Renderer,
-    Zend\Stdlib\IteratorToArray;
+use Traversable;
+use Zend\Barcode\Barcode;
+use Zend\Barcode\Exception as BarcodeException;
+use Zend\Barcode\Object;
+use Zend\Stdlib\ArrayUtils;
 
 /**
  * Class for rendering the barcode
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-abstract class AbstractRenderer implements Renderer
+abstract class AbstractRenderer implements RendererInterface
 {
     /**
      * Namespace of the renderer for autoloading
@@ -55,31 +34,31 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Activate/Deactivate the automatic rendering of exception
-     * @var boolean
+     * @var bool
      */
     protected $automaticRenderError = false;
 
     /**
      * Offset of the barcode from the top of the rendering resource
-     * @var integer
+     * @var int
      */
     protected $topOffset = 0;
 
     /**
      * Offset of the barcode from the left of the rendering resource
-     * @var integer
+     * @var int
      */
     protected $leftOffset = 0;
 
     /**
      * Horizontal position of the barcode in the rendering resource
-     * @var integer
+     * @var int
      */
     protected $horizontalPosition = 'left';
 
     /**
      * Vertical position of the barcode in the rendering resource
-     * @var integer
+     * @var int
      */
     protected $verticalPosition = 'top';
 
@@ -91,7 +70,7 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Barcode object
-     * @var Object
+     * @var Object\ObjectInterface
      */
     protected $barcode;
 
@@ -103,12 +82,11 @@ abstract class AbstractRenderer implements Renderer
     /**
      * Constructor
      * @param array|Traversable $options
-     * @return void
      */
     public function __construct($options = null)
     {
         if ($options instanceof Traversable) {
-            $options = IteratorToArray::convert($options);
+            $options = ArrayUtils::iteratorToArray($options);
         }
         if (is_array($options)) {
             $this->setOptions($options);
@@ -168,7 +146,7 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Manually adjust top position
-     * @param  integer $value
+     * @param  int $value
      * @return AbstractRenderer
      * @throws Exception\OutOfRangeException
      */
@@ -185,7 +163,7 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Retrieve vertical adjustment
-     * @return integer
+     * @return int
      */
     public function getTopOffset()
     {
@@ -194,7 +172,7 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Manually adjust left position
-     * @param  integer $value
+     * @param  int $value
      * @return AbstractRenderer
      * @throws Exception\OutOfRangeException
      */
@@ -211,7 +189,7 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Retrieve vertical adjustment
-     * @return integer
+     * @return int
      */
     public function getLeftOffset()
     {
@@ -220,7 +198,8 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Activate/Deactivate the automatic rendering of exception
-     * @param boolean $value
+     * @param  bool $value
+     * @return AbstractRenderer
      */
     public function setAutomaticRenderError($value)
     {
@@ -236,7 +215,7 @@ abstract class AbstractRenderer implements Renderer
      */
     public function setHorizontalPosition($value)
     {
-        if (!in_array($value, array('left' , 'center' , 'right'))) {
+        if (!in_array($value, array('left', 'center', 'right'))) {
             throw new Exception\UnexpectedValueException(
                 "Invalid barcode position provided must be 'left', 'center' or 'right'"
             );
@@ -262,7 +241,7 @@ abstract class AbstractRenderer implements Renderer
      */
     public function setVerticalPosition($value)
     {
-        if (!in_array($value, array('top' , 'middle' , 'bottom'))) {
+        if (!in_array($value, array('top', 'middle', 'bottom'))) {
             throw new Exception\UnexpectedValueException(
                 "Invalid barcode position provided must be 'top', 'middle' or 'bottom'"
             );
@@ -309,7 +288,7 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Retrieve the automatic rendering of exception
-     * @return boolean
+     * @return bool
      */
     public function getAutomaticRenderError()
     {
@@ -318,23 +297,18 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Set the barcode object
-     * @param  Object $barcode
+     * @param  Object\ObjectInterface $barcode
      * @return AbstractRenderer
      */
-    public function setBarcode($barcode)
+    public function setBarcode(Object\ObjectInterface $barcode)
     {
-        if (!$barcode instanceof Object) {
-            throw new Exception\InvalidArgumentException(
-                'Invalid barcode object provided to setBarcode()'
-            );
-        }
         $this->barcode = $barcode;
         return $this;
     }
 
     /**
      * Retrieve the barcode object
-     * @return Object
+     * @return Object\ObjectInterface
      */
     public function getBarcode()
     {
@@ -343,7 +317,7 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Checking of parameters after all settings
-     * @return boolean
+     * @return bool
      */
     public function checkParams()
     {
@@ -412,6 +386,8 @@ abstract class AbstractRenderer implements Renderer
 
     /**
      * Draw the barcode in the rendering resource
+     *
+     * @throws BarcodeException\ExceptionInterface
      * @return mixed
      */
     public function draw()
@@ -420,7 +396,7 @@ abstract class AbstractRenderer implements Renderer
             $this->checkParams();
             $this->initRenderer();
             $this->drawInstructionList();
-        } catch (BarcodeException $e) {
+        } catch (BarcodeException\ExceptionInterface $e) {
             if ($this->automaticRenderError && !($e instanceof BarcodeException\RendererCreationException)) {
                 $barcode = Barcode::makeBarcode(
                     'error',
@@ -487,8 +463,8 @@ abstract class AbstractRenderer implements Renderer
     /**
      * Draw a polygon in the rendering resource
      * @param array $points
-     * @param integer $color
-     * @param boolean $filled
+     * @param int $color
+     * @param  bool $filled
      */
     abstract protected function drawPolygon($points, $color, $filled = true);
 
@@ -498,7 +474,7 @@ abstract class AbstractRenderer implements Renderer
      * @param float $size
      * @param array $position
      * @param string $font
-     * @param integer $color
+     * @param int $color
      * @param string $alignment
      * @param float $orientation
      */

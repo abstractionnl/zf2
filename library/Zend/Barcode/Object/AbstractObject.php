@@ -1,44 +1,23 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Object
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Barcode\Object;
 
-use Traversable,
-    Zend\Barcode,
-    Zend\Barcode\Object\Exception,
-    Zend\Validator\Barcode as BarcodeValidator,
-    Zend\Stdlib\IteratorToArray;
+use Traversable;
+use Zend\Barcode;
+use Zend\Stdlib\ArrayUtils;
+use Zend\Validator\Barcode as BarcodeValidator;
 
 /**
  * Class for generate Barcode
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
-abstract class AbstractObject implements Barcode\Object
+abstract class AbstractObject implements ObjectInterface
 {
     /**
      * Namespace of the barcode for autoloading
@@ -60,68 +39,68 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Height of the object
-     * @var integer
+     * @var int
      */
     protected $height = null;
 
     /**
      * Width of the object
-     * @var integer
+     * @var int
      */
     protected $width = null;
 
     /**
      * Height of the bar
-     * @var integer
+     * @var int
      */
     protected $barHeight = 50;
 
     /**
      * Width of a thin bar
-     * @var integer
+     * @var int
      */
     protected $barThinWidth = 1;
 
     /**
      * Width of a thick bar
-     * @var integer
+     * @var int
      */
     protected $barThickWidth = 3;
 
     /**
      * Factor to multiply bar and font measure
      * (barHeight, barThinWidth, barThickWidth & fontSize)
-     * @var integer
+     * @var int
      */
     protected $factor = 1;
 
     /**
      * Font and bars color of the object
-     * @var integer
+     * @var int
      */
     protected $foreColor = 0x000000;
 
     /**
      * Background color of the object
-     * @var integer
+     * @var int
      */
     protected $backgroundColor = 0xFFFFFF;
 
     /**
      * Activate/deactivate border of the object
-     * @var boolean
+     * @var bool
      */
     protected $withBorder = false;
 
     /**
      * Activate/deactivate drawing of quiet zones
-     * @var boolean
+     * @var bool
      */
     protected $withQuietZones = true;
 
     /**
      * Force quiet zones even if
-     * @var boolean
+     * @var bool
      */
     protected $mandatoryQuietZones = false;
 
@@ -134,14 +113,14 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Offset from the top the object
      * (calculated from the orientation)
-     * @var integer
+     * @var int
      */
     protected $offsetTop = null;
 
     /**
      * Offset from the left the object
      * (calculated from the orientation)
-     * @var integer
+     * @var int
      */
     protected $offsetLeft = null;
 
@@ -153,13 +132,13 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Display (or not) human readable text
-     * @var boolean
+     * @var bool
      */
     protected $drawText = true;
 
     /**
      * Adjust (or not) position of human readable characters with barcode
-     * @var boolean
+     * @var bool
      */
     protected $stretchText = false;
 
@@ -167,7 +146,7 @@ abstract class AbstractObject implements Barcode\Object
      * Font resource
      *  - integer (1 to 5): corresponds to GD included fonts
      *  - string: corresponds to path of a TTF font
-     * @var integer|string
+     * @var int|string
      */
     protected $font = null;
 
@@ -179,53 +158,52 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Drawing of checksum
-     * @var boolean
+     * @var bool
      */
     protected $withChecksum = false;
 
     /**
      * Drawing of checksum inside text
-     * @var boolean
+     * @var bool
      */
     protected $withChecksumInText = false;
 
     /**
      * Fix barcode length (numeric or string like 'even')
-     * @var $_barcodeLength integer | string
+     * @var int | string
      */
     protected $barcodeLength = null;
 
     /**
      * Activate automatic addition of leading zeros
      * if barcode length is fixed
-     * @var $_addLeadingZeros boolean
+     * @var bool
      */
     protected $addLeadingZeros = true;
 
     /**
      * Activation of mandatory checksum
      * to deactivate unauthorized modification
-     * @var $_mandatoryChecksum boolean
+     * @var bool
      */
     protected $mandatoryChecksum = false;
 
     /**
      * Character used to substitute checksum character for validation
-     * @var $_substituteChecksumCharacter mixed
+     * @var mixed
      */
     protected $substituteChecksumCharacter = 0;
 
     /**
      * Constructor
      * @param array|Traversable $options
-     * @return void
      */
     public function __construct($options = null)
     {
         $this->getDefaultOptions();
         $this->font = Barcode\Barcode::getBarcodeFont();
         if ($options instanceof Traversable) {
-            $options = IteratorToArray::convert($options);
+            $options = ArrayUtils::iteratorToArray($options);
         }
         if (is_array($options)) {
             $this->setOptions($options);
@@ -248,7 +226,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Set barcode state from options array
      * @param  array $options
-     * @return \Zend\Barcode\Object
+     * @return \Zend\Barcode\Object\ObjectInterface
      */
     public function setOptions($options)
     {
@@ -265,7 +243,7 @@ abstract class AbstractObject implements Barcode\Object
      * Set barcode namespace for autoloading
      *
      * @param string $namespace
-     * @return \Zend\Barcode\Object
+     * @return \Zend\Barcode\Object\ObjectInterface
      */
     public function setBarcodeNamespace($namespace)
     {
@@ -294,9 +272,9 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Set height of the barcode bar
-     * @param integer $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @param int $value
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setBarHeight($value)
     {
@@ -311,7 +289,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Get height of the barcode bar
-     * @return integer
+     * @return int
      */
     public function getBarHeight()
     {
@@ -320,9 +298,9 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Set thickness of thin bar
-     * @param integer $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @param int $value
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setBarThinWidth($value)
     {
@@ -337,7 +315,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Get thickness of thin bar
-     * @return integer
+     * @return int
      */
     public function getBarThinWidth()
     {
@@ -346,9 +324,9 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Set thickness of thick bar
-     * @param integer $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @param int $value
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setBarThickWidth($value)
     {
@@ -363,7 +341,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Get thickness of thick bar
-     * @return integer
+     * @return int
      */
     public function getBarThickWidth()
     {
@@ -374,8 +352,8 @@ abstract class AbstractObject implements Barcode\Object
      * Set factor applying to
      * thinBarWidth - thickBarWidth - barHeight - fontSize
      * @param float $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setFactor($value)
     {
@@ -391,7 +369,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Get factor applying to
      * thinBarWidth - thickBarWidth - barHeight - fontSize
-     * @return integer
+     * @return int
      */
     public function getFactor()
     {
@@ -401,8 +379,8 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Set color of the barcode and text
      * @param string $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setForeColor($value)
     {
@@ -420,7 +398,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Retrieve color of the barcode and text
-     * @return unknown
+     * @return int
      */
     public function getForeColor()
     {
@@ -429,9 +407,9 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Set the color of the background
-     * @param integer $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @param int $value
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setBackgroundColor($value)
     {
@@ -449,7 +427,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Retrieve background color of the image
-     * @return integer
+     * @return int
      */
     public function getBackgroundColor()
     {
@@ -458,8 +436,8 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Activate/deactivate drawing of the bar
-     * @param boolean $value
-     * @return \Zend\Barcode\Object
+     * @param  bool $value
+     * @return \Zend\Barcode\Object\ObjectInterface
      */
     public function setWithBorder($value)
     {
@@ -469,7 +447,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Retrieve if border are draw or not
-     * @return boolean
+     * @return bool
      */
     public function getWithBorder()
     {
@@ -478,8 +456,8 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Activate/deactivate drawing of the quiet zones
-     * @param boolean $value
-     * @return Zend\Barcode\AbstractObject
+     * @param  bool $value
+     * @return AbstractObject
      */
     public function setWithQuietZones($value)
     {
@@ -489,7 +467,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Retrieve if quiet zones are draw or not
-     * @return boolean
+     * @return bool
      */
     public function getWithQuietZones()
     {
@@ -498,7 +476,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Allow fast inversion of font/bars color and background color
-     * @return \Zend\Barcode\Object
+     * @return \Zend\Barcode\Object\ObjectInterface
      */
     public function setReverseColor()
     {
@@ -511,8 +489,8 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Set orientation of barcode and text
      * @param float $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setOrientation($value)
     {
@@ -532,7 +510,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Set text to encode
      * @param string $value
-     * @return \Zend\Barcode\Object
+     * @return \Zend\Barcode\Object\ObjectInterface
      */
     public function setText($value)
     {
@@ -556,7 +534,8 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Automatically add leading zeros if barcode length is fixed
      * @param string $text
-     * @param boolean $withoutChecksum
+     * @param  bool $withoutChecksum
+     * @return string
      */
     protected function addLeadingZeros($text, $withoutChecksum = false)
     {
@@ -593,15 +572,15 @@ abstract class AbstractObject implements Barcode\Object
     {
         if ($this->withChecksumInText) {
             return $this->getText();
-        } else {
-            return $this->addLeadingZeros($this->text, true);
         }
+
+        return $this->addLeadingZeros($this->text, true);
     }
 
     /**
      * Activate/deactivate drawing of text to encode
-     * @param boolean $value
-     * @return \Zend\Barcode\Object
+     * @param  bool $value
+     * @return \Zend\Barcode\Object\ObjectInterface
      */
     public function setDrawText($value)
     {
@@ -611,7 +590,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Retrieve if drawing of text to encode is enabled
-     * @return boolean
+     * @return bool
      */
     public function getDrawText()
     {
@@ -621,9 +600,9 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Activate/deactivate the adjustment of the position
      * of the characters to the position of the bars
-     * @param boolean $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @param  bool $value
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setStretchText($value)
     {
@@ -634,7 +613,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Retrieve if the adjustment of the position of the characters
      * to the position of the bars is enabled
-     * @return boolean
+     * @return bool
      */
     public function getStretchText()
     {
@@ -645,8 +624,8 @@ abstract class AbstractObject implements Barcode\Object
      * Activate/deactivate the automatic generation
      * of the checksum character
      * added to the barcode text
-     * @param boolean $value
-     * @return \Zend\Barcode\Object
+     * @param  bool $value
+     * @return \Zend\Barcode\Object\ObjectInterface
      */
     public function setWithChecksum($value)
     {
@@ -659,7 +638,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Retrieve if the checksum character is automatically
      * added to the barcode text
-     * @return boolean
+     * @return bool
      */
     public function getWithChecksum()
     {
@@ -670,9 +649,9 @@ abstract class AbstractObject implements Barcode\Object
      * Activate/deactivate the automatic generation
      * of the checksum character
      * added to the barcode text
-     * @param boolean $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @param  bool $value
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setWithChecksumInText($value)
     {
@@ -685,7 +664,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Retrieve if the checksum character is automatically
      * added to the barcode text
-     * @return boolean
+     * @return bool
      */
     public function getWithChecksumInText()
     {
@@ -696,9 +675,9 @@ abstract class AbstractObject implements Barcode\Object
      * Set the font:
      *  - if integer between 1 and 5, use gd built-in fonts
      *  - if string, $value is assumed to be the path to a TTF font
-     * @param integer|string $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @param int|string $value
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setFont($value)
     {
@@ -727,7 +706,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Retrieve the font
-     * @return integer|string
+     * @return int|string
      */
     public function getFont()
     {
@@ -737,8 +716,8 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Set the size of the font in case of TTF
      * @param float $value
-     * @return \Zend\Barcode\Object
-     * @throw \Zend\Barcode\Object\Exception
+     * @return \Zend\Barcode\Object\ObjectInterface
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     public function setFontSize($value)
     {
@@ -769,15 +748,15 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Quiet zone before first bar
      * and after the last bar
-     * @return integer
+     * @return int
      */
     public function getQuietZone()
     {
         if ($this->withQuietZones || $this->mandatoryQuietZones) {
             return 10 * $this->barThinWidth * $this->factor;
-        } else {
-            return 0;
         }
+
+        return 0;
     }
 
     /**
@@ -801,8 +780,8 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Add a polygon drawing instruction in the set of instructions
      * @param array $points
-     * @param integer $color
-     * @param boolean $filled
+     * @param int $color
+     * @param  bool $filled
      */
     protected function addPolygon(array $points, $color = null, $filled = true)
     {
@@ -823,7 +802,7 @@ abstract class AbstractObject implements Barcode\Object
      * @param float $size
      * @param array $position
      * @param string $font
-     * @param integer $color
+     * @param int $color
      * @param string $alignment
      * @param float $orientation
      */
@@ -853,7 +832,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Checking of parameters after all settings
-     * @return void
+     * @return bool
      */
     public function checkParams()
     {
@@ -866,7 +845,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Check if a text is really provided to barcode
      * @return void
-     * @throw \Zend\Barcode\Object\Exception
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     protected function checkText($value = null)
     {
@@ -883,10 +862,10 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Check the ratio between the thick and the thin bar
-     * @param integer $min
-     * @param integer $max
+     * @param int $min
+     * @param int $max
      * @return void
-     * @throw \Zend\Barcode\Object\Exception
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     protected function checkRatio($min = 2, $max = 3)
     {
@@ -904,7 +883,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Drawing with an angle is just allow TTF font
      * @return void
-     * @throw \Zend\Barcode\Object\Exception
+     * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
     protected function checkFontAndOrientation()
     {
@@ -918,7 +897,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Width of the result image
      * (before any rotation)
-     * @return integer
+     * @return int
      */
     protected function calculateWidth()
     {
@@ -929,13 +908,13 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Calculate the width of the barcode
-     * @return integer
+     * @return int
      */
     abstract protected function calculateBarcodeWidth();
 
     /**
      * Height of the result object
-     * @return integer
+     * @return int
      */
     protected function calculateHeight()
     {
@@ -946,7 +925,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Height of the barcode
-     * @return integer
+     * @return int
      */
     protected function calculateBarcodeHeight()
     {
@@ -961,7 +940,8 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Get height of the result object
-     * @return integer
+     * @param bool $recalculate
+     * @return int
      */
     public function getHeight($recalculate = false)
     {
@@ -975,7 +955,8 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Get width of the result object
-     * @return integer
+     * @param bool $recalculate
+     * @return int
      */
     public function getWidth($recalculate = false)
     {
@@ -990,7 +971,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Calculate the offset from the left of the object
      * if an orientation is activated
-     * @param boolean $recalculate
+     * @param  bool $recalculate
      * @return float
      */
     public function getOffsetLeft($recalculate = false)
@@ -1017,7 +998,7 @@ abstract class AbstractObject implements Barcode\Object
     /**
      * Calculate the offset from the top of the object
      * if an orientation is activated
-     * @param boolean $recalculate
+     * @param  bool $recalculate
      * @return float
      */
     public function getOffsetTop($recalculate = false)
@@ -1055,7 +1036,7 @@ abstract class AbstractObject implements Barcode\Object
         $y2 = $y1 * cos($this->orientation / 180 * pi())
             + $x1 * sin($this->orientation / 180 * pi())
             + $this->getOffsetTop();
-        return array(intval($x2) , intval($y2));
+        return array(intval($x2), intval($y2));
     }
 
     /**
@@ -1199,7 +1180,7 @@ abstract class AbstractObject implements Barcode\Object
 
     /**
      * Check for invalid characters
-     * @param   string $value    Text to be ckecked
+     * @param   string $value    Text to be checked
      * @return void
      */
     public function validateText($value)

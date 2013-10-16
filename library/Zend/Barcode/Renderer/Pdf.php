@@ -1,42 +1,21 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @subpackage Renderer
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Barcode\Renderer;
 
-use Zend\Barcode\Renderer\Exception,
-    Zend\Pdf\Color,
-    Zend\Pdf\Font,
-    Zend\Pdf\Page,
-    Zend\Pdf\PdfDocument;
+use ZendPdf\Color;
+use ZendPdf\Font;
+use ZendPdf\Page;
+use ZendPdf\PdfDocument;
 
 /**
  * Class for rendering the barcode in PDF resource
- *
- * @category   Zend
- * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Pdf extends AbstractRenderer
 {
@@ -48,7 +27,7 @@ class Pdf extends AbstractRenderer
 
     /**
      * Page number in PDF resource
-     * @var integer
+     * @var int
      */
     protected $page = 0;
 
@@ -59,19 +38,14 @@ class Pdf extends AbstractRenderer
     protected $moduleSize = 0.5;
 
     /**
-     * Set an image resource to draw the barcode inside
-     * @param resource $value
-     * @return \Zend\Barcode\Renderer
-     * @throw  Exception
+     * Set a PDF resource to draw the barcode inside
+     *
+     * @param PdfDocument $pdf
+     * @param int     $page
+     * @return Pdf
      */
-    public function setResource($pdf, $page = 0)
+    public function setResource(PdfDocument $pdf, $page = 0)
     {
-        if (!$pdf instanceof PdfDocument) {
-            throw new Exception\InvalidArgumentException(
-                'Invalid Zend\Pdf\PdfDocument resource provided to setResource()'
-            );
-        }
-
         $this->resource = $pdf;
         $this->page     = intval($page);
 
@@ -124,8 +98,8 @@ class Pdf extends AbstractRenderer
     /**
      * Draw a polygon in the rendering resource
      * @param array $points
-     * @param integer $color
-     * @param boolean $filled
+     * @param int $color
+     * @param  bool $filled
      */
     protected function drawPolygon($points, $color, $filled = true)
     {
@@ -164,13 +138,13 @@ class Pdf extends AbstractRenderer
 
     /**
      * Draw a polygon in the rendering resource
-     * @param string $text
-     * @param float $size
-     * @param array $position
-     * @param string $font
-     * @param integer $color
-     * @param string $alignment
-     * @param float $orientation
+     * @param string  $text
+     * @param float   $size
+     * @param array   $position
+     * @param string  $font
+     * @param int     $color
+     * @param string  $alignment
+     * @param float   $orientation
      */
     protected function drawText(
         $text,
@@ -228,7 +202,7 @@ class Pdf extends AbstractRenderer
     {
         $drawingString = iconv('UTF-8', 'UTF-16BE//IGNORE', $text);
         $characters    = array();
-        for ($i = 0; $i < strlen($drawingString); $i ++) {
+        for ($i = 0, $len = strlen($drawingString); $i < $len; $i++) {
             $characters[] = (ord($drawingString[$i ++]) << 8) | ord($drawingString[$i]);
         }
         $glyphs = $font->glyphNumbersForCharacters($characters);

@@ -1,36 +1,17 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-/**
- * @namespace
- */
 namespace Zend\Validator;
 
-/**
- * @uses       \Zend\Validator\AbstractValidator
- * @uses       \Zend\Validator\Exception
- * @category   Zend
- * @package    Zend_Validate
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
+use Traversable;
+use Zend\Stdlib\ArrayUtils;
+
 class Between extends AbstractValidator
 {
     const NOT_BETWEEN        = 'notBetween';
@@ -41,9 +22,9 @@ class Between extends AbstractValidator
      *
      * @var array
      */
-    protected $_messageTemplates = array(
-        self::NOT_BETWEEN        => "'%value%' is not between '%min%' and '%max%', inclusively",
-        self::NOT_BETWEEN_STRICT => "'%value%' is not strictly between '%min%' and '%max%'"
+    protected $messageTemplates = array(
+        self::NOT_BETWEEN        => "The input is not between '%min%' and '%max%', inclusively",
+        self::NOT_BETWEEN_STRICT => "The input is not strictly between '%min%' and '%max%'"
     );
 
     /**
@@ -51,7 +32,7 @@ class Between extends AbstractValidator
      *
      * @var array
      */
-    protected $_messageVariables = array(
+    protected $messageVariables = array(
         'min' => array('options' => 'min'),
         'max' => array('options' => 'max'),
     );
@@ -74,14 +55,14 @@ class Between extends AbstractValidator
      *   'max' => scalar, maximum border
      *   'inclusive' => boolean, inclusive border values
      *
-     * @param  array|\Zend\Config\Config $options
-     * @return void
+     * @param  array|Traversable $options
      */
     public function __construct($options = null)
     {
-        if ($options instanceof \Zend\Config\Config) {
-            $options = $options->toArray();
-        } else if (!is_array($options)) {
+        if ($options instanceof Traversable) {
+            $options = ArrayUtils::iteratorToArray($options);
+        }
+        if (!is_array($options)) {
             $options = func_get_args();
             $temp['min'] = array_shift($options);
             if (!empty($options)) {
@@ -116,7 +97,7 @@ class Between extends AbstractValidator
      * Sets the min option
      *
      * @param  mixed $min
-     * @return \Zend\Validator\Between Provides a fluent interface
+     * @return Between Provides a fluent interface
      */
     public function setMin($min)
     {
@@ -138,7 +119,7 @@ class Between extends AbstractValidator
      * Sets the max option
      *
      * @param  mixed $max
-     * @return \Zend\Validator\Between Provides a fluent interface
+     * @return Between Provides a fluent interface
      */
     public function setMax($max)
     {
@@ -149,7 +130,7 @@ class Between extends AbstractValidator
     /**
      * Returns the inclusive option
      *
-     * @return boolean
+     * @return bool
      */
     public function getInclusive()
     {
@@ -159,8 +140,8 @@ class Between extends AbstractValidator
     /**
      * Sets the inclusive option
      *
-     * @param  boolean $inclusive
-     * @return \Zend\Validator\Between Provides a fluent interface
+     * @param  bool $inclusive
+     * @return Between Provides a fluent interface
      */
     public function setInclusive($inclusive)
     {
@@ -173,7 +154,7 @@ class Between extends AbstractValidator
      * if inclusive option is true.
      *
      * @param  mixed $value
-     * @return boolean
+     * @return bool
      */
     public function isValid($value)
     {
