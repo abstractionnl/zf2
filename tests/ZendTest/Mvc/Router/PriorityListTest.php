@@ -137,4 +137,13 @@ class PriorityListTest extends TestCase
 
         $this->assertEquals(array('bar', 'foo', 'baz'), $orders);
     }
+
+    public function testKey()
+    {
+        $this->list->insert('bar', new TestAsset\DummyRoute(), 0);
+        $this->list->insert('baz', new TestAsset\DummyRoute(), 2);
+
+        end($this->list);
+        $this->assertEquals('bar', key($this->list));
+    }
 }
