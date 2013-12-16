@@ -10,7 +10,6 @@
 namespace ZendTest\View\Helper;
 
 use Zend\I18n\Translator\Translator;
-use Zend\View\Helper\Placeholder\Registry;
 use Zend\View\Helper;
 
 /**
@@ -164,6 +163,10 @@ class HeadTitleTest extends \PHPUnit_Framework_TestCase
 
     public function testCanTranslateTitle()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $loader = new TestAsset\ArrayTranslator();
         $loader->translations = array(
             'Message_1' => 'Message 1 (en)',

@@ -35,6 +35,10 @@ class TranslatorTest extends TestCase
 
     public function setUp()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $this->originalLocale = Locale::getDefault();
         $this->translator     = new Translator();
 
@@ -45,7 +49,9 @@ class TranslatorTest extends TestCase
 
     public function tearDown()
     {
-        Locale::setDefault($this->originalLocale);
+        if (extension_loaded('intl')) {
+            Locale::setDefault($this->originalLocale);
+        }
     }
 
     public function testFactoryCreatesTranslator()
@@ -262,7 +268,7 @@ class TranslatorTest extends TestCase
         $actualEvent = null;
 
         $this->translator->enableEventManager();
-        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function(EventInterface $event) use (&$actualEvent) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function (EventInterface $event) use (&$actualEvent) {
             $actualEvent = $event;
         });
 
@@ -291,13 +297,13 @@ class TranslatorTest extends TestCase
         $doNotTriger = null;
 
         $this->translator->enableEventManager();
-        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function(EventInterface $event) use (&$trigger) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function (EventInterface $event) use (&$trigger) {
             $trigger = true;
         });
-        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function(EventInterface $event) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function (EventInterface $event) {
             return 'EVENT TRIGGERED';
         });
-        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function(EventInterface $event) use (&$doNotTrigger) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function (EventInterface $event) use (&$doNotTrigger) {
             $doNotTrigger = true;
         });
 
@@ -312,7 +318,7 @@ class TranslatorTest extends TestCase
         $actualEvent = null;
 
         $this->translator->enableEventManager();
-        $this->translator->getEventManager()->attach(Translator::EVENT_NO_MESSAGES_LOADED, function(EventInterface $event) use (&$actualEvent) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_NO_MESSAGES_LOADED, function (EventInterface $event) use (&$actualEvent) {
             $actualEvent = $event;
         });
 
@@ -344,13 +350,13 @@ class TranslatorTest extends TestCase
 
         $this->translator->enableEventManager();
         $events = $this->translator->getEventManager();
-        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function(EventInterface $event) use (&$trigger) {
+        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function (EventInterface $event) use (&$trigger) {
             $trigger = true;
         });
-        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function(EventInterface $event) use ($textDomain) {
+        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function (EventInterface $event) use ($textDomain) {
             return $textDomain;
         });
-        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function(EventInterface $event) use (&$doNotTrigger) {
+        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function (EventInterface $event) use (&$doNotTrigger) {
             $doNotTrigger = true;
         });
 

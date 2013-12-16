@@ -14,7 +14,6 @@ use RedisException as RedisResourceException;
 use stdClass;
 use Zend\Cache\Storage\Adapter\AbstractAdapter;
 use Zend\Cache\Exception;
-use Zend\Cache\Storage\AvailableSpaceCapableInterface;
 use Zend\Cache\Storage\Capabilities;
 use Zend\Cache\Storage\FlushableInterface;
 use Zend\Cache\Storage\TotalSpaceCapableInterface;
@@ -186,7 +185,7 @@ class Redis extends AbstractAdapter implements
         //combine the key => value pairs and remove all missing values
         return array_filter(
             array_combine($normalizedKeys, $results),
-            function($value) {
+            function ($value) {
                 return $value !== false;
             }
         );

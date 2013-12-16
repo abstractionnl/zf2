@@ -9,7 +9,6 @@
 
 namespace Zend\Http\Header;
 
-use Closure;
 use Zend\Uri\UriFactory;
 
 /**
@@ -77,6 +76,13 @@ class SetCookie implements MultipleHeaderInterface
     protected $secure = null;
 
     /**
+     * If the value need to be quoted or not
+     *
+     * @var bool
+     */
+    protected $quoteFieldValue = false;
+
+    /**
      * @var bool|null
      */
     protected $httponly = null;
@@ -90,7 +96,6 @@ class SetCookie implements MultipleHeaderInterface
      */
     public static function fromString($headerLine, $bypassHeaderFieldName = false)
     {
-        /* @var $setCookieProcessor Closure */
         static $setCookieProcessor = null;
 
         if ($setCookieProcessor === null) {
@@ -100,7 +105,7 @@ class SetCookie implements MultipleHeaderInterface
                 $keyValuePairs = preg_split('#;\s*#', $headerLine);
 
                 foreach ($keyValuePairs as $keyValue) {
-                    if (preg_match('#^(?<headerKey>[^=]+)=\s*("?)(?<headerValue>[^"]+)\2#',$keyValue,$matches)) {
+                    if (preg_match('#^(?P<headerKey>[^=]+)=\s*("?)(?P<headerValue>[^"]+)\2#', $keyValue, $matches)) {
                         $headerKey  = $matches['headerKey'];
                         $headerValue= $matches['headerValue'];
                     } else {
@@ -133,8 +138,7 @@ class SetCookie implements MultipleHeaderInterface
             };
         }
 
-        list($name, $value) = explode(':', $headerLine, 2);
-        $value = ltrim($value);
+        list($name, $value) = GenericHeader::splitHeaderLine($headerLine);
 
         // some sites return set-cookie::value, this is to get rid of the second :
         $name = (strtolower($name) =='set-cookie:') ? 'set-cookie' : $name;
@@ -207,8 +211,11 @@ class SetCookie implements MultipleHeaderInterface
         }
 
         $value = urlencode($this->getValue());
+        if ( $this->hasQuoteFieldValue() ) {
+            $value = '"'. $value . '"';
+        }
 
-        $fieldValue = $this->getName() . '="' . $value . '"';
+        $fieldValue = $this->getName() . '=' . $value;
 
         $version = $this->getVersion();
         if ($version!==null) {
@@ -425,6 +432,16 @@ class SetCookie implements MultipleHeaderInterface
     }
 
     /**
+     * @param  bool $quotedValue
+     * @return SetCookie
+     */
+    public function setQuoteFieldValue($quotedValue)
+    {
+        $this->quoteFieldValue = (bool) $quotedValue;
+        return $this;
+    }
+
+    /**
      * @return bool
      */
     public function isSecure()
@@ -479,6 +496,16 @@ class SetCookie implements MultipleHeaderInterface
     public function isSessionCookie()
     {
         return ($this->expires === null);
+    }
+
+    /**
+     * Check whether the cookie is a session cookie (has no expiry time set)
+     *
+     * @return bool
+     */
+    public function hasQuoteFieldValue()
+    {
+        return $this->quoteFieldValue;
     }
 
     public function isValidForRequest($requestDomain, $path, $isSecure = false)
